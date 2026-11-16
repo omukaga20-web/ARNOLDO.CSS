@@ -27,9 +27,22 @@
 
         <h3 id="cart-total">Total: KSh 0</h3>
 
-        <button onclick="clearCart()">Clear Cart</button>
+        <button type="button" onclick="clearCart()">Clear Cart</button>
+        <button type="button" onclick="checkout()">Proceed to Checkout</button>
 
-        <button onclick="checkout()">Proceed to Checkout</button>
+        <dialog id="checkout-dialog" class="checkout-dialog" aria-labelledby="checkout-title">
+            <form id="checkout-form" class="checkout-form">
+                <button class="dialog-close" type="button" aria-label="Close checkout" onclick="closeCheckout()">×</button>
+                <p class="eyebrow">Secure M-Pesa checkout</p>
+                <h2 id="checkout-title">Almost yours.</h2>
+                <p class="checkout-intro">Enter your Kenyan mobile number and we&apos;ll send an STK Push to your phone.</p>
+                <label for="checkout-phone">M-Pesa phone number</label>
+                <input id="checkout-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="0712 345 678" pattern="[+0-9() -]{9,18}" required>
+                <p class="checkout-hint">Use a number that can receive an M-Pesa prompt.</p>
+                <p id="checkout-status" class="checkout-status" role="status" aria-live="polite"></p>
+                <button id="checkout-submit" class="checkout-submit" type="submit">Send payment request</button>
+            </form>
+        </dialog>
     </main>
 
     <footer>

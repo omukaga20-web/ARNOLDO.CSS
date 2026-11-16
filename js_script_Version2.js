@@ -1,10 +1,17 @@
 function getCart() {
-    return JSON.parse(localStorage.getItem("cart")) || [];
+    try {
+        const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+        return Array.isArray(cart) ? cart : [];
+    } catch {
+        return [];
+    }
 }
 
 function saveCart(cart) {
     localStorage.setItem("cart", JSON.stringify(cart));
 }
+
+let activeCheckoutReference = null;
 
 // Add products
 function addToCart(name, price) {
@@ -25,64 +32,170 @@ function addToCart(name, price) {
     alert(name + " added to cart!");
 }
 
-// Display shopping cart
 function displayCart() {
-    let cart = getCart();
-    let container = document.getElementById("cart-items");
-    let totalElement = document.getElementById("cart-total");
+    const cart = getCart();
+    const container = document.getElementById("cart-items");
+    const totalElement = document.getElementById("cart-total");
 
     if (!container || !totalElement) return;
 
-    container.innerHTML = "";
+    container.replaceChildren();
     let total = 0;
 
     cart.forEach((item, index) => {
-        let subtotal = item.price * item.quantity;
+        const quantity = Number.isInteger(item.quantity) && item.quantity > 0 ? item.quantity : 0;
+        const price = Number.isFinite(Number(item.price)) ? Number(item.price) : 0;
+        const subtotal = price * quantity;
         total += subtotal;
 
-        container.innerHTML += `
-            <div class="cart-item">
-                <h3>${item.name}</h3>
-                <p>Price: KSh ${item.price}</p>
-                <p>Quantity: ${item.quantity}</p>
-                <p>Subtotal: KSh ${subtotal}</p>
-                <button onclick="removeItem(${index})">Remove</button>
-            </div>
-        `;
+        const row = document.createElement("article");
+        row.className = "cart-item";
+        const name = document.createElement("h3");
+        name.textContent = String(item.name || "Product");
+        const details = document.createElement("p");
+        details.textContent = `KSh ${price} each · Quantity ${quantity} · Subtotal KSh ${subtotal}`;
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.className = "remove-btn";
+        removeButton.textContent = "Remove";
+        removeButton.addEventListener("click", () => removeItem(index));
+
+        row.append(name, details, removeButton);
+        container.append(row);
     });
 
     if (cart.length === 0) {
-        container.innerHTML = "<p>Your cart is empty.</p>";
+        const emptyMessage = document.createElement("p");
+        emptyMessage.textContent = "Your cart is empty.";
+        container.append(emptyMessage);
     }
 
-    totalElement.textContent = "Total: KSh " + total;
+    totalElement.textContent = `Total: KSh ${total}`;
 }
 
-// Remove product
 function removeItem(index) {
-    let cart = getCart();
+    const cart = getCart();
     cart.splice(index, 1);
     saveCart(cart);
     displayCart();
 }
 
-// Clear shopping cart
 function clearCart() {
     localStorage.removeItem("cart");
     displayCart();
 }
 
-// Checkout
 function checkout() {
-    let cart = getCart();
+    const cart = getCart();
+    const dialog = document.getElementById("checkout-dialog");
 
     if (cart.length === 0) {
         alert("Your cart is empty!");
         return;
     }
 
-    alert("Checkout will be available soon!");
+    if (dialog && !dialog.open) dialog.showModal();
+    document.getElementById("checkout-phone")?.focus();
 }
 
-// Load cart when page opens
-document.addEventListener("DOMContentLoaded", displayCart);
+function closeCheckout() {
+    document.getElementById("checkout-dialog")?.close();
+}
+
+function setCheckoutStatus(message, state = "") {
+    const status = document.getElementById("checkout-status");
+    if (!status) return;
+    status.textContent = message;
+    status.dataset.state = state;
+}
+
+async function watchPayment(reference, submitButton) {
+    for (let attempt = 0; attempt < 24; attempt += 1) {
+        await new Promise((resolve) => window.setTimeout(resolve, 5000));
+
+        try {
+            const response = await fetch(`/api/payments/status?reference=${encodeURIComponent(reference)}`, {
+                headers: { Accept: "application/json" },
+                cache: "no-store",
+            });
+            const result = await response.json();
+
+            if (result.status === "completed") {
+                setCheckoutStatus("Payment confirmed. Thank you for shopping with us.", "success");
+                localStorage.removeItem("cart");
+                displayCart();
+                activeCheckoutReference = null;
+                submitButton.disabled = true;
+                submitButton.textContent = "Payment complete";
+                return;
+            }
+
+            if (["failed", "cancelled"].includes(result.status)) {
+                setCheckoutStatus("This payment did not complete. Check your M-Pesa message and try again.", "error");
+                activeCheckoutReference = null;
+                submitButton.disabled = false;
+                submitButton.textContent = "Try payment again";
+                return;
+            }
+        } catch {
+            setCheckoutStatus("Still waiting for payment confirmation. Keep this window open and approve the prompt on your phone.");
+        }
+    }
+
+    setCheckoutStatus("Payment is still pending. Check your phone before starting another request.");
+    submitButton.disabled = false;
+    submitButton.textContent = "Check payment again";
+}
+
+async function submitCheckout(event) {
+    event.preventDefault();
+    const cart = getCart();
+    const phoneInput = document.getElementById("checkout-phone");
+    const submitButton = document.getElementById("checkout-submit");
+
+    if (!cart.length || !phoneInput || !submitButton) return;
+
+    const reference = activeCheckoutReference || crypto.randomUUID();
+    activeCheckoutReference = reference;
+    submitButton.disabled = true;
+    submitButton.textContent = "Sending request…";
+    setCheckoutStatus("Connecting securely to PayHero…");
+
+    try {
+        const response = await fetch("/api/payments/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({
+                reference,
+                phoneNumber: phoneInput.value,
+                items: cart.map((item) => ({ name: item.name, quantity: item.quantity })),
+            }),
+        });
+        const result = await response.json();
+
+        if (!response.ok && response.status !== 202) {
+            throw new Error(result.error || "We could not start checkout. Please try again.");
+        }
+
+        if (["failed", "cancelled"].includes(result.status)) {
+            activeCheckoutReference = null;
+            setCheckoutStatus(result.message || "This payment did not complete. Please try again.", "error");
+            submitButton.disabled = false;
+            submitButton.textContent = "Try payment again";
+            return;
+        }
+
+        setCheckoutStatus(result.message || "Check your phone and approve the M-Pesa prompt.");
+        submitButton.textContent = "Waiting for payment…";
+        await watchPayment(reference, submitButton);
+    } catch (error) {
+        setCheckoutStatus(error.message || "We could not start checkout. Please try again.", "error");
+        submitButton.disabled = false;
+        submitButton.textContent = "Try payment again";
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    displayCart();
+    document.getElementById("checkout-form")?.addEventListener("submit", submitCheckout);
+});
