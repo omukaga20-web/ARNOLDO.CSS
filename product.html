@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Supermarket | Products</title>
+    <link rel="stylesheet" href="supermarket-website/css/style.css">
+    <script src="supermarket-website/js/script.js" defer></script>
+</head>
+<body>
+
+    <header>
+        <h1>🛒 MY SUPERMARKET</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="product.html">Products</a>
+            <a href="cart.html">Cart 🛒</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h2>Our Products</h2>
+        <p>Choose your favourite products.</p>
+
+        <div class="products">
+            <div class="product-card">
+                <div class="product-image">🥛</div>
+                <h3>Fresh Milk</h3>
+                <p>KSh 70</p>
+                <button onclick="addToCart('Fresh Milk', 70)">Add to Cart</button>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image">🍞</div>
+                <h3>Bread</h3>
+                <p>KSh 65</p>
+                <button onclick="addToCart('Bread', 65)">Add to Cart</button>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image">🍚</div>
+                <h3>Rice</h3>
+                <p>KSh 180</p>
+                <button onclick="addToCart('Rice', 180)">Add to Cart</button>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image">🍎</div>
+                <h3>Apples</h3>
+                <p>KSh 30</p>
+                <button onclick="addToCart('Apples', 30)">Add to Cart</button>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image">🥚</div>
+                <h3>Eggs</h3>
+                <p>KSh 25</p>
+                <button onclick="addToCart('Eggs', 25)">Add to Cart</button>
+            </div>
+
+            <div class="product-card">
+                <div class="product-image">🧃</div>
+                <h3>Juice</h3>
+                <p>KSh 100</p>
+                <button onclick="addToCart('Juice', 100)">Add to Cart</button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 My Supermarket</p>
+    </footer>
+
+</body>
+</html>
