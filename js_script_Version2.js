@@ -198,4 +198,33 @@ async function submitCheckout(event) {
 document.addEventListener("DOMContentLoaded", () => {
     displayCart();
     document.getElementById("checkout-form")?.addEventListener("submit", submitCheckout);
+
+    const searchInput = document.getElementById("store-search");
+    const resultStatus = document.getElementById("product-search-status");
+    const productCards = Array.from(document.querySelectorAll(".products .product-card"));
+    const initialQuery = new URLSearchParams(window.location.search).get("q") || "";
+
+    if (searchInput && productCards.length) {
+        searchInput.value = initialQuery;
+        const filterProducts = () => {
+            const query = searchInput.value.trim().toLocaleLowerCase();
+            let visibleCount = 0;
+
+            productCards.forEach((card) => {
+                const matches = card.textContent.toLocaleLowerCase().includes(query);
+                card.hidden = !matches;
+                if (matches) visibleCount += 1;
+            });
+
+            if (resultStatus) {
+                resultStatus.hidden = !query;
+                resultStatus.textContent = query
+                    ? `${visibleCount} ${visibleCount === 1 ? "product" : "products"} found for “${searchInput.value.trim()}”.`
+                    : "";
+            }
+        };
+
+        searchInput.addEventListener("input", filterProducts);
+        filterProducts();
+    }
 });

@@ -3,29 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supermarket Website</title>
+    <meta name="theme-color" content="#ffffff">
+    <meta name="description" content="Shop fresh groceries and everyday essentials at great prices.">
+    <title>My Supermarket | Fresh groceries and great prices</title>
     <link rel="stylesheet" href="supermarket-website_css_style_Version2.css">
 </head>
 <body>
 
-<header>
-    <h1>MY SUPERMARKET</h1>
-    <nav>
-        <a href="index.html">Home</a>
-        <a href="product.html">Products</a>
-        <a href="cart_Version2.html">Cart</a>
+<div class="offer-strip"><span>Fresh deals, every day</span><span>Delivery across Nairobi</span></div>
+<header class="site-header">
+    <div class="header-main">
+        <a class="store-brand" href="index.html" aria-label="My Supermarket home"><span class="brand-mark" aria-hidden="true">M</span><span>MY<span class="brand-accent">MARKET</span></span></a>
+        <a class="delivery-link" href="product.html"><span class="delivery-icon" aria-hidden="true">⌖</span><span><small>Deliver to</small><strong>Nairobi</strong></span></a>
+        <form class="search-form" action="product.html" role="search">
+            <label class="sr-only" for="store-search">Search products</label>
+            <input id="store-search" name="q" type="search" placeholder="Search for products, brands and more">
+            <button type="submit" aria-label="Search">Search</button>
+        </form>
+        <a class="cart-link" href="cart_Version2.html" aria-label="View your cart"><span class="cart-icon" aria-hidden="true"></span><strong>Cart</strong></a>
+    </div>
+    <nav class="category-nav" aria-label="Shop departments">
+        <a class="category-link category-active" href="product.html">All products</a>
+        <a class="category-link" href="product.html">Groceries</a>
+        <a class="category-link" href="product.html">Fresh food</a>
+        <a class="category-link" href="product.html">Home &amp; cleaning</a>
+        <a class="category-link" href="product.html">Drinks</a>
     </nav>
 </header>
 
-<section class="hero">
-    <h2>Welcome to our Supermarket</h2>
-    <p>Fresh products. Affordable prices.</p>
-    <button onclick="location.href='product.html'">Shop Now</button>
-</section>
+<main>
+    <section class="hero-banner" aria-labelledby="hero-title">
+        <div class="hero-content">
+            <p class="hero-kicker"><span class="deal-dot"></span> GOOD DEALS, GOOD DAYS</p>
+            <h1 id="hero-title">Your weekly shop,<br><span>made fresher.</span></h1>
+            <p class="hero-copy">Fill your basket with everyday favourites and fresh picks at prices you&apos;ll love.</p>
+            <a class="primary-button" href="product.html">Shop all products <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="hero-badge"><strong>Fresh</strong><span>for less</span></div>
+    </section>
 
-<footer>
-    <p>&copy; 2026 My Supermarket. All rights reserved.</p>
-</footer>
+    <section class="benefit-row" aria-label="Shopping benefits">
+        <div class="benefit"><span class="benefit-icon" aria-hidden="true">✓</span><span><strong>Fresh every day</strong><small>Quality you can count on</small></span></div>
+        <div class="benefit"><span class="benefit-icon" aria-hidden="true">₭</span><span><strong>Great value</strong><small>More for your money</small></span></div>
+        <div class="benefit"><span class="benefit-icon" aria-hidden="true">⌖</span><span><strong>Easy delivery</strong><small>Right to your door</small></span></div>
+    </section>
+
+    <section class="home-products" aria-labelledby="popular-title">
+        <div class="section-heading"><div><p class="section-eyebrow">THE EVERYDAY ESSENTIALS</p><h2 id="popular-title">Popular picks</h2></div><a href="product.html" class="text-link">Shop all <span aria-hidden="true">→</span></a></div>
+        <div class="products home-product-grid">
+            <article class="product-card"><div class="product-image milk-image"><img src="/products/fresh-milk.png" alt=""></div><div class="product-info"><p class="product-category">DAIRY &amp; EGGS</p><h3>Fresh Milk</h3><p class="product-price">KSh 70</p><a class="card-button" href="product.html">Shop now</a></div></article>
+            <article class="product-card"><div class="product-image bread-image"><img src="/products/fresh-bread.png" alt=""></div><div class="product-info"><p class="product-category">BAKERY</p><h3>Fresh Bread</h3><p class="product-price">KSh 65</p><a class="card-button" href="product.html">Shop now</a></div></article>
+            <article class="product-card"><div class="product-image apple-image"><img src="/products/apples.png" alt=""></div><div class="product-info"><p class="product-category">FRUIT &amp; VEG</p><h3>Red Apples</h3><p class="product-price">KSh 30</p><a class="card-button" href="product.html">Shop now</a></div></article>
+        </div>
+    </section>
+</main>
+
+<footer class="site-footer"><a class="store-brand footer-brand" href="index.html"><span class="brand-mark" aria-hidden="true">M</span><span>MY<span class="brand-accent">MARKET</span></span></a><p>Good food. Great value. Every day.</p><small>&copy; 2026 My Supermarket. All rights reserved.</small></footer>
 
 </body>
 </html>

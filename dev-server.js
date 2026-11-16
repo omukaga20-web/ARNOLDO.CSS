@@ -21,6 +21,7 @@ const mimeTypes = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
+  ".png": "image/png",
   ".svg": "image/svg+xml",
 };
 
@@ -91,6 +92,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === "/") pathname = "/index.html";
+  if (pathname.startsWith("/products/")) pathname = `/public${pathname}`;
   const filePath = path.resolve(projectRoot, `.${pathname}`);
   const hasHiddenSegment = pathname.split(path.sep).some((segment) => segment.startsWith("."));
   if (!filePath.startsWith(`${projectRoot}${path.sep}`) || hasHiddenSegment) {
