@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Supermarket | Shopping Cart</title>
+    <link rel="stylesheet" href="supermarket-website/css/style.css">
+    <script src="supermarket-website/js/script.js" defer></script>
+</head>
+<body>
+
+    <header>
+        <h1>🛒 MY SUPERMARKET</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="product.html">Products</a>
+            <a href="cart.html">Cart 🛒</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <h2>My Shopping Cart</h2>
+
+        <div id="cart-items">
+            <!-- Cart products appear here -->
+        </div>
+
+        <h3 id="cart-total">Total: KSh 0</h3>
+
+        <button onclick="clearCart()">Clear Cart</button>
+        <button onclick="checkout()">Proceed to Checkout</button>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 My Supermarket</p>
+    </footer>
+
+</body>
+</html>
