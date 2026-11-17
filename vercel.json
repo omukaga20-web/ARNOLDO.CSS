@@ -1,4 +1,5 @@
 {
+  "outputDirectory": ".",
   "functions": {
     "api/payments/*.js": {
       "maxDuration": 30
