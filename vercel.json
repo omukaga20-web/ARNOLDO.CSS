@@ -1,11 +1,5 @@
 {
   "outputDirectory": ".",
-  "rewrites": [
-    { "source": "/products/:path*", "destination": "/public/products/:path*" },
-    { "source": "/app-icon.png", "destination": "/public/app-icon.png" },
-    { "source": "/app-icon-192.png", "destination": "/public/app-icon-192.png" },
-    { "source": "/app-icon-512.png", "destination": "/public/app-icon-512.png" }
-  ],
   "functions": {
     "api/payments/*.js": {
       "maxDuration": 30

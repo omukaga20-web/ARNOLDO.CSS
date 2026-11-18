@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "MySupermarket — Fresh groceries",
+  "name": "MySupermarket",
   "short_name": "MySupermarket",
-  "description": "Shop fresh groceries and everyday essentials at great prices.",
+  "description": "Shop fresh groceries and everyday essentials from MySupermarket, Nairobi’s trusted online supermarket.",
   "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
