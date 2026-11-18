@@ -79,13 +79,19 @@ module.exports = async function createPayment(req, res) {
     return sendJson(res, 503, { error: error.message });
   }
 
-  await db.insert(payheroOrders).values({
+  const [createdOrder] = await db.insert(payheroOrders).values({
     externalReference: reference,
     phoneNumber,
     amount: totals.amount,
     items: totals.items,
     status: "pending",
+  }).onConflictDoNothing({ target: payheroOrders.externalReference }).returning({
+    externalReference: payheroOrders.externalReference,
   });
+
+  if (!createdOrder) {
+    return sendJson(res, 409, { error: "This checkout was already submitted. Check its status before retrying." });
+  }
 
   try {
     const { authorization, channelId, callbackUrl } = paymentConfig;
@@ -106,18 +112,24 @@ module.exports = async function createPayment(req, res) {
       signal: AbortSignal.timeout(20000),
     });
     const result = await response.json().catch(() => ({}));
+    const paymentResult = result.data && typeof result.data === "object"
+      ? result.data
+      : result.response && typeof result.response === "object"
+        ? result.response
+        : result;
 
-    if (!response.ok || result.success === false) {
+    const providerStatus = String(paymentResult.status || "").toLowerCase();
+    if (!response.ok || result.success === false || result.status === false || paymentResult.success === false || paymentResult.status === false || ["failed", "failure", "error"].includes(providerStatus)) {
       await db.update(payheroOrders)
         .set({ status: "failed", updatedAt: new Date() })
         .where(eq(payheroOrders.externalReference, reference));
       return sendJson(res, 502, {
-        error: result.message || result.error || "PayHero could not start the M-Pesa request. Please try again.",
+        error: paymentResult.message || result.message || result.error || "PayHero could not start the M-Pesa request. Please try again.",
       });
     }
 
-    const providerReference = result.reference || result.CheckoutRequestID || null;
-    const checkoutRequestId = result.CheckoutRequestID || null;
+    const providerReference = paymentResult.reference || paymentResult.Reference || paymentResult.CheckoutRequestID || null;
+    const checkoutRequestId = paymentResult.CheckoutRequestID || null;
     if (providerReference || checkoutRequestId) {
       await db.update(payheroOrders)
         .set({ providerReference, checkoutRequestId, updatedAt: new Date() })
@@ -127,19 +139,13 @@ module.exports = async function createPayment(req, res) {
     return sendJson(res, 200, {
       reference,
       status: "pending",
-      message: result.message || "M-Pesa prompt sent. Enter your PIN on your phone to approve the payment.",
+      message: paymentResult.message || result.message || "M-Pesa prompt sent. Enter your PIN on your phone to approve the payment.",
     });
-  } catch (error) {
-    if (error.name === "AbortError" || error.name === "TimeoutError") {
-      return sendJson(res, 202, {
-        reference,
-        status: "pending",
-        message: "The payment request is taking longer than expected. Check your phone before trying again.",
-      });
-    }
-
-    return sendJson(res, 502, {
-      error: error.message || "Unable to start checkout. Please try again.",
+  } catch {
+    return sendJson(res, 202, {
+      reference,
+      status: "pending",
+      message: "We couldn’t confirm whether the request reached PayHero. Check your phone and payment status before retrying.",
     });
   }
 };

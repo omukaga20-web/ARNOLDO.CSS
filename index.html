@@ -3,10 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#063b76">
     <meta name="description" content="Shop fresh groceries and everyday essentials at great prices.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="apple-touch-icon" href="/app-icon-192.png">
     <title>My Supermarket | Fresh groceries and great prices</title>
     <link rel="stylesheet" href="supermarket-website_css_style_Version2.css">
+    <script src="/pwa.js" defer></script>
 </head>
 <body>
 
@@ -47,6 +52,48 @@
         <div class="benefit"><span class="benefit-icon" aria-hidden="true">₭</span><span><strong>Great value</strong><small>More for your money</small></span></div>
         <div class="benefit"><span class="benefit-icon" aria-hidden="true">⌖</span><span><strong>Easy delivery</strong><small>Right to your door</small></span></div>
     </section>
+
+    <section class="app-download" id="download-app" aria-labelledby="app-download-title">
+        <div class="app-download-copy">
+            <p class="app-download-eyebrow">YOUR SHOP, READY WHEN YOU ARE</p>
+            <h2 id="app-download-title">SHOP FASTER WITH THE MYSUPERMARKET APP</h2>
+            <p>Keep your favourite groceries one tap away. Install for a quick, full-screen shopping experience on your phone.</p>
+            <button class="app-install-button" id="app-install-button" type="button">Download Our App <span aria-hidden="true">↓</span></button>
+            <div class="install-instructions" aria-label="Installation instructions">
+                <p><strong>Android</strong><span>Tap Download Our App and confirm Install. If no prompt appears, open your browser menu and choose Install app.</span></p>
+                <p><strong>iPhone &amp; iPad</strong><span>Open this page in Safari, tap Share, then choose Add to Home Screen.</span></p>
+            </div>
+        </div>
+        <div class="app-download-visual">
+            <div class="app-phone" role="img" aria-label="Preview of the MySupermarket mobile app">
+                <div class="phone-speaker" aria-hidden="true"></div>
+                <div class="phone-screen">
+                    <div class="phone-status"><span>9:41</span><span>●●● ◖</span></div>
+                    <div class="phone-brand"><span class="brand-mark" aria-hidden="true">M</span><span>MY<span class="brand-accent">MARKET</span></span></div>
+                    <div class="phone-search">Search groceries</div>
+                    <div class="phone-promo"><small>GOOD DEALS, GOOD DAYS</small><strong>Your weekly shop,<br>made fresher.</strong><span>Shop now →</span></div>
+                    <div class="phone-section"><strong>Popular picks</strong><span>See all</span></div>
+                    <div class="phone-products" aria-hidden="true">
+                        <div><img src="/products/fresh-milk.png" alt=""><strong>Fresh Milk</strong><small>KSh 70</small></div>
+                        <div><img src="/products/apples.png" alt=""><strong>Red Apples</strong><small>KSh 30</small></div>
+                    </div>
+                    <div class="phone-tabs"><span>⌂<small>Home</small></span><span>⌕<small>Search</small></span><span>▢<small>Cart</small></span></div>
+                </div>
+            </div>
+            <div class="app-qr-card"><img id="app-qr-code" alt="" width="118" height="118" loading="lazy"><strong>Scan to shop</strong><span>Open MySupermarket on your phone</span></div>
+        </div>
+    </section>
+
+    <dialog class="app-install-dialog" id="app-install-dialog" aria-labelledby="app-install-title">
+        <div class="app-install-dialog-content">
+            <button class="dialog-close" id="app-install-close" type="button" aria-label="Close installation instructions">×</button>
+            <img src="/app-icon-192.png" alt="" width="56" height="56">
+            <p class="section-eyebrow">MY SUPERMARKET APP</p>
+            <h2 id="app-install-title">Install MySupermarket</h2>
+            <p id="app-install-copy">Add MySupermarket to your home screen for a faster shopping experience.</p>
+            <p class="app-dialog-note">Your cart and checkout stay connected to this website.</p>
+        </div>
+    </dialog>
 
     <section class="home-products" aria-labelledby="popular-title">
         <div class="section-heading"><div><p class="section-eyebrow">THE EVERYDAY ESSENTIALS</p><h2 id="popular-title">Popular picks</h2></div><a href="product.html" class="text-link">Shop all <span aria-hidden="true">→</span></a></div>

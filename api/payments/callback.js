@@ -33,10 +33,6 @@ module.exports = async function payHeroCallback(req, res) {
     return sendJson(res, 404, { error: "Checkout not found." });
   }
 
-  await db.update(payheroOrders)
-    .set({ callbackPayload: body, updatedAt: new Date() })
-    .where(eq(payheroOrders.externalReference, reference));
-
   try {
     await refreshOrderStatus(order);
   } catch {

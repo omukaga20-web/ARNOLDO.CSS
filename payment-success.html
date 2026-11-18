@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#063b76">
+  <meta name="description" content="Secure payment status for your MySupermarket order.">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/supermarket-website_css_style_Version2.css">
+  <script src="/pwa.js" defer></script>
+  <title>Payment status | MySupermarket</title>
+</head>
+<body>
+  <main class="payment-result container" aria-live="polite">
+    <p class="section-eyebrow">SECURE CHECKOUT</p>
+    <h1 id="payment-result-title">Checking your payment…</h1>
+    <p id="payment-result-copy">We’re confirming the payment directly with the payment provider. Please keep this page open.</p>
+    <p id="payment-reference" class="payment-reference"></p>
+    <a class="primary-button" href="/product.html">Continue shopping</a>
+  </main>
+  <script>
+    (() => {
+      const params = new URLSearchParams(window.location.search);
+      const reference = params.get("reference");
+      const title = document.getElementById("payment-result-title");
+      const copy = document.getElementById("payment-result-copy");
+      const referenceLabel = document.getElementById("payment-reference");
+
+      if (!reference || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(reference)) {
+        title.textContent = "We couldn’t find this checkout";
+        copy.textContent = "Return to your cart and check the payment status before placing another order.";
+        return;
+      }
+
+      referenceLabel.textContent = `Transaction reference: ${reference}`;
+
+      (async () => {
+        for (let attempt = 0; attempt < 15; attempt += 1) {
+          try {
+            const response = await fetch(`/api/payments/status?reference=${encodeURIComponent(reference)}`, { cache: "no-store" });
+            const result = await response.json();
+            if (response.ok && result.status === "completed") {
+              title.textContent = "Payment confirmed";
+              copy.textContent = "Your payment has been verified by the provider. Thank you for shopping with MySupermarket.";
+              window.localStorage.removeItem("cart");
+              return;
+            }
+            if (response.ok && ["failed", "cancelled"].includes(result.status)) {
+              title.textContent = "Payment not completed";
+              copy.textContent = "No successful payment was confirmed. You can return to your cart and retry securely.";
+              return;
+            }
+          } catch {}
+          await new Promise((resolve) => window.setTimeout(resolve, 2000));
+        }
+        title.textContent = "Payment is still being confirmed";
+        copy.textContent = "Your transaction reference is shown below. Please check your order status again before starting another payment.";
+      })();
+    })();
+  </script>
+</body>
+</html>

@@ -107,7 +107,7 @@ main > button + button { margin-left: 8px; }
 .checkout-form h2 { margin: 0 0 8px; color: var(--blue-deep); font-size: 1.95rem; font-weight: 900; letter-spacing: -.04em; line-height: 1.1; }
 .checkout-intro { margin: 0 0 20px; color: var(--muted); font-size: .85rem; }
 .checkout-form label { margin-bottom: 7px; font-size: .86rem; font-weight: 700; }
-.checkout-form input { width: 100%; min-height: 48px; padding: 11px 13px; border: 1px solid #bcc8d5; border-radius: 5px; background: white; color: var(--ink); }
+.checkout-form input:not([hidden]), .checkout-form select { width: 100%; min-height: 48px; padding: 11px 13px; border: 1px solid #bcc8d5; border-radius: 5px; background: white; color: var(--ink); }
 .checkout-form input:focus-visible { outline: 3px solid #f5a700; outline-offset: 2px; }
 .checkout-hint { margin: 7px 0 0; color: var(--muted); font-size: .78rem; }
 .checkout-status { min-height: 24px; margin: 15px 0 9px; color: var(--blue-deep); font-size: .86rem; font-weight: 650; }
@@ -175,4 +175,74 @@ main > button + button { margin-left: 8px; }
 }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}
+.app-download { display: grid; width: min(1180px, calc(100% - 36px)); min-height: 450px; margin: 0 auto 64px; grid-template-columns: minmax(0, 1.02fr) minmax(0, .98fr); align-items: center; gap: 34px; padding: clamp(26px, 5vw, 58px); overflow: hidden; border-radius: 14px; background: linear-gradient(135deg, #063b76 0%, #0754a5 100%); color: #fff; }
+.app-download-copy { max-width: 510px; }
+.app-download-eyebrow { margin: 0 0 12px; color: var(--yellow); font-size: .68rem; font-weight: 900; letter-spacing: .12em; }
+.app-download h2 { max-width: 470px; margin: 0 0 12px; font-size: clamp(1.65rem, 3vw, 2.55rem); line-height: 1.08; letter-spacing: -.04em; }
+.app-download-copy > p:not(.app-download-eyebrow) { max-width: 440px; margin: 0 0 20px; color: rgba(255,255,255,.84); font-size: .9rem; }
+.app-install-button { display: inline-flex; min-height: 48px; align-items: center; gap: 13px; padding: 0 19px; border-radius: 6px; background: var(--yellow); color: var(--blue-deep); font-size: .86rem; font-weight: 900; }
+.app-install-button:hover { background: #f5bf00; }
+.install-instructions { display: grid; max-width: 510px; margin-top: 22px; gap: 12px; }
+.install-instructions p { display: grid; margin: 0; grid-template-columns: 98px minmax(0, 1fr); gap: 10px; font-size: .76rem; line-height: 1.5; }
+.install-instructions strong { color: var(--yellow); }
+.install-instructions span { color: rgba(255,255,255,.86); }
+.app-download-visual { position: relative; display: flex; min-height: 370px; align-items: center; justify-content: center; gap: 17px; }
+.app-phone { position: relative; width: 208px; height: 378px; flex: 0 0 auto; padding: 7px; border: 2px solid #9ab4d0; border-radius: 30px; background: #102b49; box-shadow: 0 18px 42px #001a3670; transform: rotate(-3deg); }
+.phone-speaker { position: absolute; z-index: 2; top: 12px; left: 50%; width: 55px; height: 13px; transform: translateX(-50%); border-radius: 12px; background: #102b49; }
+.phone-screen { position: relative; height: 100%; padding: 13px 11px 9px; overflow: hidden; border-radius: 23px; background: #f6f7f8; color: var(--ink); }
+.phone-status { display: flex; height: 20px; justify-content: space-between; font-size: .52rem; font-weight: 800; }
+.phone-brand { display: flex; align-items: center; gap: 5px; margin: 9px 0 11px; color: var(--blue-deep); font-size: .7rem; font-weight: 900; }
+.phone-brand .brand-mark { width: 22px; height: 22px; border-width: 2px; font-size: .7rem; }
+.phone-search { padding: 7px 9px; border: 1px solid #dce2e8; border-radius: 5px; background: white; color: #7b8793; font-size: .56rem; }
+.phone-promo { display: flex; min-height: 116px; margin-top: 10px; flex-direction: column; justify-content: center; gap: 6px; padding: 11px; border-radius: 7px; background: linear-gradient(135deg, #063b76, #0754a5); color: white; }
+.phone-promo small { color: var(--yellow); font-size: .43rem; font-weight: 900; letter-spacing: .06em; }
+.phone-promo strong { font-size: 1.02rem; line-height: 1.04; }
+.phone-promo span { color: var(--yellow); font-size: .54rem; font-weight: 800; }
+.phone-section { display: flex; margin: 12px 1px 7px; justify-content: space-between; color: var(--blue-deep); font-size: .61rem; }
+.phone-section span { color: var(--red); font-size: .5rem; font-weight: 700; }
+.phone-products { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.phone-products > div { display: flex; min-width: 0; flex-direction: column; padding: 5px; border: 1px solid var(--line); border-radius: 5px; background: white; }
+.phone-products img { width: 100%; height: 58px; object-fit: cover; border-radius: 3px; }
+.phone-products strong { margin-top: 4px; font-size: .48rem; }
+.phone-products small { color: var(--blue-deep); font-size: .48rem; font-weight: 800; }
+.phone-tabs { position: absolute; right: 0; bottom: 0; left: 0; display: flex; height: 39px; justify-content: space-around; padding-top: 3px; border-top: 1px solid var(--line); background: white; color: var(--blue); font-size: .65rem; text-align: center; }
+.phone-tabs span { display: flex; flex-direction: column; align-items: center; }
+.phone-tabs small { font-size: .42rem; }
+.app-qr-card { display: flex; width: 146px; flex: 0 0 auto; flex-direction: column; align-items: center; gap: 5px; padding: 11px 9px; border-radius: 9px; background: white; color: var(--ink); box-shadow: 0 10px 25px #001a363d; }
+.app-qr-card img { display: block; width: 118px; height: 118px; object-fit: contain; }
+.app-qr-card strong { color: var(--blue-deep); font-size: .68rem; }
+.app-qr-card span { color: var(--muted); font-size: .54rem; text-align: center; }
+.app-install-dialog { width: min(410px, calc(100% - 28px)); max-width: none; margin: auto; padding: 0; border: 1px solid var(--line); border-radius: 13px; background: white; color: var(--ink); box-shadow: 0 28px 90px #0b26473d; }
+.app-install-dialog::backdrop { background: #0d223b99; backdrop-filter: blur(3px); }
+.app-install-dialog-content { position: relative; padding: 28px; }
+.app-install-dialog-content > img { margin-bottom: 16px; border-radius: 12px; }
+.app-install-dialog-content h2 { margin: 0 0 9px; color: var(--blue-deep); font-size: 1.55rem; line-height: 1.12; }
+.app-install-dialog-content > p:not(.section-eyebrow) { margin: 0; color: var(--muted); font-size: .88rem; }
+.app-install-dialog-content .app-dialog-note { margin-top: 14px !important; padding-top: 12px; border-top: 1px solid var(--line); font-size: .76rem !important; }
+@media (max-width: 760px) {
+    .app-download { width: calc(100% - 24px); margin-bottom: 42px; grid-template-columns: 1fr; gap: 8px; padding: 24px 18px 19px; }
+    .app-download h2 { max-width: 410px; font-size: clamp(1.55rem, 8vw, 2.05rem); }
+    .app-download-copy > p:not(.app-download-eyebrow) { font-size: .83rem; }
+    .install-instructions { margin-top: 17px; gap: 10px; }
+    .install-instructions p { grid-template-columns: 91px minmax(0, 1fr); gap: 8px; font-size: .71rem; }
+    .app-download-visual { min-height: 320px; gap: 10px; margin-top: 6px; }
+    .app-phone { width: 176px; height: 318px; border-radius: 26px; }
+    .phone-screen { border-radius: 20px; }
+    .phone-promo { min-height: 91px; }
+    .phone-promo strong { font-size: .9rem; }
+    .phone-products img { height: 45px; }
+    .app-qr-card { width: 118px; padding: 8px 6px; }
+    .app-qr-card img { width: 100px; height: 100px; }
+}
+@media (max-width: 360px) {
+    .app-download-visual { min-height: 250px; gap: 7px; }
+    .app-phone { width: 136px; height: 250px; padding: 6px; }
+    .phone-screen { padding-inline: 8px; }
+    .phone-brand { margin-block: 6px 8px; }
+    .phone-promo { min-height: 78px; }
+    .phone-products img { height: 36px; }
+    .phone-tabs { height: 33px; }
+    .app-qr-card { width: 94px; }
+    .app-qr-card img { width: 78px; height: 78px; }
 }

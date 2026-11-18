@@ -14,6 +14,8 @@ const apiHandlers = new Map([
   ["/api/payments/create", require("./api/payments/create")],
   ["/api/payments/status", require("./api/payments/status")],
   ["/api/payments/callback", require("./api/payments/callback")],
+  ["/api/payments/stripe-create", require("./api/payments/stripe-create")],
+  ["/api/payments/stripe-webhook", require("./api/payments/stripe-webhook")],
 ]);
 
 const mimeTypes = {
@@ -23,6 +25,7 @@ const mimeTypes = {
   ".json": "application/json; charset=utf-8",
   ".png": "image/png",
   ".svg": "image/svg+xml",
+  ".webmanifest": "application/manifest+json; charset=utf-8",
 };
 
 function sendJson(res, statusCode, payload) {
@@ -32,7 +35,7 @@ function sendJson(res, statusCode, payload) {
   res.end(JSON.stringify(payload));
 }
 
-async function readJsonBody(req) {
+async function readRawBody(req) {
   const chunks = [];
   let size = 0;
 
@@ -42,15 +45,22 @@ async function readJsonBody(req) {
     chunks.push(chunk);
   }
 
-  if (size === 0) return {};
-  return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  return Buffer.concat(chunks);
+}
+
+async function readJsonBody(req) {
+  const rawBody = await readRawBody(req);
+  if (rawBody.length === 0) return {};
+  return JSON.parse(rawBody.toString("utf8"));
 }
 
 async function handleApi(req, res, url, handler) {
   req.query = Object.fromEntries(url.searchParams.entries());
 
   try {
-    req.body = await readJsonBody(req);
+    req.body = url.pathname.replace(/\/$/, "") === "/api/payments/stripe-webhook"
+      ? await readRawBody(req)
+      : await readJsonBody(req);
   } catch {
     return sendJson(res, 400, { error: "Invalid request body." });
   }
@@ -93,6 +103,7 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname === "/") pathname = "/index.html";
   if (pathname.startsWith("/products/")) pathname = `/public${pathname}`;
+  if (["/app-icon.png", "/app-icon-192.png", "/app-icon-512.png"].includes(pathname)) pathname = `/public${pathname}`;
   const filePath = path.resolve(projectRoot, `.${pathname}`);
   const hasHiddenSegment = pathname.split(path.sep).some((segment) => segment.startsWith("."));
   if (!filePath.startsWith(`${projectRoot}${path.sep}`) || hasHiddenSegment) {

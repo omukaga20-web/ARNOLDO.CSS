@@ -10,7 +10,7 @@ module.exports = async function getPaymentStatus(req, res) {
   }
 
   const reference = String(req.query?.reference || "");
-  if (!/^[0-9a-f-]{36}$/i.test(reference)) {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(reference)) {
     return sendJson(res, 400, { error: "Invalid checkout reference." });
   }
 
