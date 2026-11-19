@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#063b76">
+    <meta name="description" content="Sign in to your MySupermarket customer account.">
+    <link rel="icon" type="image/png" sizes="192x192" href="/app-icon-192.png">
+    <link rel="stylesheet" href="/supermarket-website_css_style_Version2.css">
+    <link rel="stylesheet" href="/account.css">
+    <script type="module" src="/js/auth-pages.js"></script>
+    <title>Sign in | MySupermarket</title>
+</head>
+<body class="account-page" data-auth-page="login">
+    <div class="offer-strip"><span>Fresh deals, every day</span><span>Delivery across Nairobi</span></div>
+    <header class="account-header">
+        <a class="store-brand" href="/" aria-label="MySupermarket home"><img class="brand-mark" src="/app-icon-192.png" alt=""><span>My<span class="brand-accent">Supermarket</span></span></a>
+        <a class="account-back-link" href="/product">Continue shopping</a>
+    </header>
+    <main class="account-auth-layout auth-centered">
+        <section class="account-auth-card" aria-labelledby="auth-title">
+            <a class="auth-logo" href="/" aria-label="MySupermarket home"><img src="/app-icon-192.png" alt=""></a>
+            <p class="section-eyebrow">WELCOME BACK</p>
+            <h1 id="auth-title">Sign in to your account</h1>
+            <p class="auth-intro">Use the email address or phone number on your account.</p>
+            <form class="account-form" data-auth-form="login" novalidate>
+                <label for="login-identifier">Email or phone number</label>
+                <input id="login-identifier" name="identifier" autocomplete="username" inputmode="email" required maxlength="254" placeholder="Email or phone number">
+                <div class="password-label-row"><label for="login-password">Password</label><a href="/forgot-password">Forgot password?</a></div>
+                <div class="password-field"><input id="login-password" name="password" type="password" autocomplete="current-password" required maxlength="128"><button type="button" class="password-toggle" data-toggle-password aria-controls="login-password" aria-pressed="false">Show</button></div>
+                <label class="terms-check remember-check"><input name="remember" type="checkbox" checked><span>Keep me signed in on this device</span></label>
+                <p class="auth-status" data-auth-status role="status" aria-live="polite" hidden></p>
+                <button class="auth-submit" type="submit">Sign in</button>
+            </form>
+            <p class="auth-switch">New to MySupermarket? <a href="/signup">Create an account</a></p>
+        </section>
+        <aside class="account-auth-aside login-aside" aria-label="MySupermarket account benefits">
+            <span class="aside-kicker">YOUR SHOP, SIMPLIFIED</span>
+            <h2>Your favourites<br>are just ahead.</h2>
+            <p>Sign in to see recent orders, manage your delivery details and continue shopping.</p>
+            <a href="/product">Explore the shop <span aria-hidden="true">→</span></a>
+        </aside>
+    </main>
+</body>
+</html>

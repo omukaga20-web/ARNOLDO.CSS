@@ -16,6 +16,7 @@ const apiHandlers = new Map([
   ["/api/payments/callback", require("./api/payments/callback")],
   ["/api/payments/stripe-create", require("./api/payments/stripe-create")],
   ["/api/payments/stripe-webhook", require("./api/payments/stripe-webhook")],
+  ["/api/auth/config", require("./api/auth/config")],
 ]);
 
 const mimeTypes = {

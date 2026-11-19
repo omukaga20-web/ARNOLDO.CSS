@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#063b76">
+    <meta name="description" content="Create a MySupermarket account to manage your shopping and orders.">
+    <link rel="icon" type="image/png" sizes="192x192" href="/app-icon-192.png">
+    <link rel="stylesheet" href="/supermarket-website_css_style_Version2.css">
+    <link rel="stylesheet" href="/account.css">
+    <script type="module" src="/js/auth-pages.js"></script>
+    <title>Create account | MySupermarket</title>
+</head>
+<body class="account-page" data-auth-page="signup">
+    <div class="offer-strip"><span>Fresh deals, every day</span><span>Delivery across Nairobi</span></div>
+    <header class="account-header">
+        <a class="store-brand" href="/" aria-label="MySupermarket home"><img class="brand-mark" src="/app-icon-192.png" alt=""><span>My<span class="brand-accent">Supermarket</span></span></a>
+        <a class="account-back-link" href="/product">Continue shopping</a>
+    </header>
+    <main class="account-auth-layout">
+        <section class="account-auth-card" aria-labelledby="auth-title">
+            <a class="auth-logo" href="/" aria-label="MySupermarket home"><img src="/app-icon-192.png" alt=""></a>
+            <p class="section-eyebrow">SHOP WITH EASE</p>
+            <h1 id="auth-title">Create your account</h1>
+            <p class="auth-intro">Keep your details, delivery addresses and orders together.</p>
+            <form class="account-form" data-auth-form="signup" novalidate>
+                <label for="signup-name">Full name</label>
+                <input id="signup-name" name="fullName" autocomplete="name" required minlength="2" maxlength="120" placeholder="e.g. Amina Wanjiku">
+                <label for="signup-email">Email address</label>
+                <input id="signup-email" name="email" type="email" autocomplete="email" inputmode="email" required maxlength="254" placeholder="you@example.com">
+                <label for="signup-phone">Phone number</label>
+                <input id="signup-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" required pattern="[+0-9() -]{9,18}" maxlength="18" placeholder="0712 345 678">
+                <label for="signup-password">Password</label>
+                <div class="password-field"><input id="signup-password" name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="128" aria-describedby="password-hint"><button type="button" class="password-toggle" data-toggle-password aria-controls="signup-password" aria-pressed="false">Show</button></div>
+                <p class="field-hint" id="password-hint">Use at least 8 characters.</p>
+                <label for="signup-confirm-password">Confirm password</label>
+                <input id="signup-confirm-password" name="confirmPassword" type="password" autocomplete="new-password" required minlength="8" maxlength="128">
+                <label class="terms-check"><input name="terms" type="checkbox" required><span>I agree to the <a href="/terms" target="_blank" rel="noopener">terms and conditions</a>.</span></label>
+                <p class="auth-status" data-auth-status role="status" aria-live="polite" hidden></p>
+                <button class="auth-submit" type="submit">Create account</button>
+            </form>
+            <p class="auth-switch">Already have an account? <a href="/login">Sign in</a></p>
+        </section>
+        <aside class="account-auth-aside" aria-label="MySupermarket account benefits">
+            <span class="aside-kicker">YOUR SHOP, SIMPLIFIED</span>
+            <h2>Good food.<br>One easier account.</h2>
+            <p>Save delivery details, keep track of orders and get back to your regular shop faster.</p>
+            <a href="/product">Explore the shop <span aria-hidden="true">→</span></a>
+        </aside>
+    </main>
+</body>
+</html>
