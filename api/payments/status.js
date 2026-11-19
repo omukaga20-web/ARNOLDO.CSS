@@ -2,6 +2,7 @@ const { eq } = require("drizzle-orm");
 const { db } = require("../../lib/db");
 const { payheroOrders } = require("../../lib/schema");
 const { refreshOrderStatus, sendJson } = require("../../lib/payhero");
+const { updateCustomerOrder } = require("../../lib/customer-account");
 
 module.exports = async function getPaymentStatus(req, res) {
   if (req.method !== "GET") {
@@ -28,6 +29,8 @@ module.exports = async function getPaymentStatus(req, res) {
       // Keep the order pending; the browser can safely retry this status check.
     }
   }
+
+  try { await updateCustomerOrder(order.externalReference, order.status); } catch { /* payment status remains authoritative in the checkout ledger */ }
 
   return sendJson(res, 200, {
     reference: order.externalReference,

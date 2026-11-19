@@ -2,6 +2,7 @@ const { eq } = require("drizzle-orm");
 const { db } = require("../../lib/db");
 const { payheroOrders } = require("../../lib/schema");
 const { refreshOrderStatus, sendJson } = require("../../lib/payhero");
+const { updateCustomerOrder } = require("../../lib/customer-account");
 
 module.exports = async function payHeroCallback(req, res) {
   if (req.method !== "POST") {
@@ -38,6 +39,11 @@ module.exports = async function payHeroCallback(req, res) {
   } catch {
     return sendJson(res, 503, { error: "Payment status could not be verified yet. PayHero may retry this callback." });
   }
+
+  try {
+    const [updatedOrder] = await db.select().from(payheroOrders).where(eq(payheroOrders.externalReference, reference)).limit(1);
+    if (updatedOrder) await updateCustomerOrder(reference, updatedOrder.status);
+  } catch { /* payment callbacks are acknowledged after the provider ledger is updated */ }
 
   return sendJson(res, 200, { received: true });
 };

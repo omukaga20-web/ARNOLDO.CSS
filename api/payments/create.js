@@ -1,6 +1,7 @@
 const { and, eq, gte, sql } = require("drizzle-orm");
 const { db } = require("../../lib/db");
 const { payheroOrders } = require("../../lib/schema");
+const { upsertCustomerOrder, updateCustomerOrder } = require("../../lib/customer-account");
 const {
   PAYHERO_API,
   getCallbackUrl,
@@ -94,6 +95,13 @@ module.exports = async function createPayment(req, res) {
   }
 
   try {
+    await upsertCustomerOrder({ req, reference, amount: totals.amount, items: totals.items, phoneNumber, paymentMethod: "mpesa" });
+  } catch {
+    await db.update(payheroOrders).set({ status: "failed", updatedAt: new Date() }).where(eq(payheroOrders.externalReference, reference));
+    return sendJson(res, 503, { error: "Your account order could not be saved. Please start checkout again." });
+  }
+
+  try {
     const { authorization, channelId, callbackUrl } = paymentConfig;
     const response = await fetch(`${PAYHERO_API}/payments`, {
       method: "POST",
@@ -123,6 +131,7 @@ module.exports = async function createPayment(req, res) {
       await db.update(payheroOrders)
         .set({ status: "failed", updatedAt: new Date() })
         .where(eq(payheroOrders.externalReference, reference));
+      try { await updateCustomerOrder(reference, "failed"); } catch { /* payment ledger remains authoritative */ }
       return sendJson(res, 502, {
         error: paymentResult.message || result.message || result.error || "PayHero could not start the M-Pesa request. Please try again.",
       });

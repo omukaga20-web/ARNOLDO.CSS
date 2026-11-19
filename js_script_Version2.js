@@ -1,3 +1,5 @@
+import { supabase } from "./js/supabase-client.js";
+
 function getCart() {
     try {
         const cart = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -9,6 +11,7 @@ function getCart() {
 
 function saveCart(cart) {
     localStorage.setItem("cart", JSON.stringify(cart));
+    window.dispatchEvent(new CustomEvent("cart:updated"));
 }
 
 let activeCheckoutReference = null;
@@ -20,7 +23,7 @@ function addToCart(name, price) {
     let product = cart.find(item => item.name === name);
 
     if (product) {
-        product.quantity++;
+        product.quantity = Math.min(10, product.quantity + 1);
     } else {
         cart.push({
             name: name,
@@ -83,6 +86,7 @@ function removeItem(index) {
 
 function clearCart() {
     localStorage.removeItem("cart");
+    window.dispatchEvent(new CustomEvent("cart:updated"));
     displayCart();
 }
 
@@ -126,6 +130,7 @@ async function watchPayment(reference, submitButton, isCardPayment) {
             if (result.status === "completed") {
                 setCheckoutStatus("Payment confirmed. Thank you for shopping with us.", "success");
                 localStorage.removeItem("cart");
+                window.dispatchEvent(new CustomEvent("cart:updated"));
                 displayCart();
                 activeCheckoutReference = null;
                 activeCheckoutMethod = null;
@@ -179,9 +184,14 @@ async function submitCheckout(event) {
     setCheckoutStatus(isCardPayment ? "Connecting securely to Stripe…" : "Connecting securely to PayHero…");
 
     try {
+        const { data: { session } } = await supabase.auth.getSession();
         const response = await fetch(isCardPayment ? "/api/payments/stripe-create" : "/api/payments/create", {
             method: "POST",
-            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+                ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+            },
             body: JSON.stringify({
                 reference,
                 phoneNumber: phoneInput.value,
@@ -220,7 +230,9 @@ async function submitCheckout(event) {
     }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+Object.assign(window, { addToCart, displayCart, removeItem, clearCart, checkout, closeCheckout });
+
+function initializeStorefront() {
     displayCart();
     document.getElementById("checkout-form")?.addEventListener("submit", submitCheckout);
 
@@ -291,4 +303,10 @@ document.addEventListener("DOMContentLoaded", () => {
         searchInput.addEventListener("input", filterProducts);
         filterProducts();
     }
-});
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeStorefront, { once: true });
+} else {
+    initializeStorefront();
+}

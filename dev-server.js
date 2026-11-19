@@ -16,6 +16,20 @@ const apiHandlers = new Map([
   ["/api/payments/callback", require("./api/payments/callback")],
   ["/api/payments/stripe-create", require("./api/payments/stripe-create")],
   ["/api/payments/stripe-webhook", require("./api/payments/stripe-webhook")],
+  ["/api/auth/config", require("./api/auth/config")],
+  ["/api/admin/customers", require("./api/admin/customers")],
+]);
+
+const pageAliases = new Map([
+  ["/login", "/login.html"],
+  ["/signup", "/signup.html"],
+  ["/forgot-password", "/forgot-password.html"],
+  ["/reset-password", "/reset-password.html"],
+  ["/account", "/account.html"],
+  ["/admin", "/admin.html"],
+  ["/product", "/product.html"],
+  ["/cart", "/cart_Version2.html"],
+  ["/auth/callback", "/auth/callback.html"],
 ]);
 
 const mimeTypes = {
@@ -102,6 +116,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === "/") pathname = "/index.html";
+  else pathname = pageAliases.get(pathname) || pathname;
   if (pathname.startsWith("/products/")) pathname = `/public${pathname}`;
   if (["/app-icon.png", "/app-icon-192.png", "/app-icon-512.png"].includes(pathname)) pathname = `/public${pathname}`;
   const filePath = path.resolve(projectRoot, `.${pathname}`);
@@ -118,7 +133,9 @@ const server = http.createServer(async (req, res) => {
     }
 
     res.setHeader("Content-Type", mimeTypes[path.extname(filePath)] || "application/octet-stream");
+    res.setHeader("Cache-Control", "no-store");
     res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "SAMEORIGIN");
     if (req.method === "HEAD") return res.end();
     fs.createReadStream(filePath).pipe(res);
   });

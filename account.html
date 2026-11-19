@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#063b76">
+  <meta name="description" content="Manage your MySupermarket profile, saved delivery addresses, basket and orders.">
+  <link rel="icon" type="image/png" sizes="192x192" href="/app-icon-192.png">
+  <link rel="stylesheet" href="/supermarket-website_css_style_Version2.css">
+  <link rel="stylesheet" href="/account.css">
+  <script type="module" src="/js/account-dashboard.js"></script>
+  <title>My account | MySupermarket</title>
+</head>
+<body class="account-page dashboard-page">
+  <div class="offer-strip"><span>Fresh deals, every day</span><span>Delivery across Nairobi</span></div>
+  <header class="account-header"><a class="store-brand" href="/" aria-label="MySupermarket home"><img class="brand-mark" src="/app-icon-192.png" alt=""><span>My<span class="brand-accent">Supermarket</span></span></a><nav class="account-actions" aria-label="Account actions"><a class="account-back-link" href="/product">Continue shopping</a><button class="text-button" type="button" data-signout>Sign out</button></nav></header>
+  <main class="account-dashboard">
+    <section class="dashboard-heading"><div><p class="section-eyebrow">YOUR MYSUPERMARKET</p><h1>My account</h1><p class="dashboard-welcome" data-welcome>Loading your account…</p></div><a class="auth-submit dashboard-shop-link" href="/product">Shop products</a></section>
+    <p class="dashboard-status" data-dashboard-status role="status" aria-live="polite" hidden></p>
+    <nav class="dashboard-tabs" aria-label="Account sections"><a href="#profile">Profile</a><a href="#addresses">Addresses</a><a href="#orders">Orders</a><a href="#saved-cart">Saved cart</a></nav>
+    <div class="dashboard-grid">
+      <section class="dashboard-card" id="profile" aria-labelledby="profile-title"><div class="dashboard-card-heading"><div><p class="section-eyebrow">PERSONAL DETAILS</p><h2 id="profile-title">Your profile</h2></div></div><form class="account-form" data-profile-form><label for="profile-name">Full name</label><input id="profile-name" name="full_name" autocomplete="name" minlength="2" maxlength="120" required><label for="profile-email">Email address</label><input id="profile-email" name="email" type="email" autocomplete="email" readonly aria-describedby="email-note"><p class="field-hint" id="email-note">Email is managed through your sign-in.</p><label for="profile-phone">Phone number</label><input id="profile-phone" name="phone_number" type="tel" autocomplete="tel" inputmode="tel" maxlength="18" pattern="[+0-9() -]{9,18}"><button class="auth-submit" type="submit">Save profile</button></form></section>
+      <section class="dashboard-card" id="addresses" aria-labelledby="addresses-title"><div class="dashboard-card-heading"><div><p class="section-eyebrow">DELIVERY DETAILS</p><h2 id="addresses-title">Saved addresses</h2></div></div><div class="address-list" data-address-list><p class="empty-state">Loading addresses…</p></div><details class="address-editor"><summary>Add a delivery address</summary><form class="account-form address-form" data-address-form><label for="address-label">Address label</label><input id="address-label" name="label" maxlength="40" value="Home" required><label for="address-recipient">Recipient name</label><input id="address-recipient" name="recipient_name" autocomplete="name" minlength="2" maxlength="120" required><label for="address-phone">Phone number</label><input id="address-phone" name="phone_number" type="tel" autocomplete="tel" inputmode="tel" maxlength="18" pattern="[+0-9() -]{9,18}" required><label for="address-line1">Address</label><input id="address-line1" name="address_line1" autocomplete="street-address" minlength="3" maxlength="200" placeholder="Building, street or estate" required><label for="address-line2">Apartment or landmark <span class="optional">(optional)</span></label><input id="address-line2" name="address_line2" maxlength="200"><label for="address-city">City</label><input id="address-city" name="city" autocomplete="address-level2" value="Nairobi" minlength="2" maxlength="80" required><label for="address-county">County <span class="optional">(optional)</span></label><input id="address-county" name="county" autocomplete="address-level1" maxlength="80"><label class="terms-check"><input name="is_default" type="checkbox"><span>Set as my default address</span></label><button class="auth-submit" type="submit">Save address</button></form></details></section>
+      <section class="dashboard-card dashboard-wide" id="orders" aria-labelledby="orders-title"><div class="dashboard-card-heading"><div><p class="section-eyebrow">YOUR SHOPPING HISTORY</p><h2 id="orders-title">Recent orders</h2></div></div><div class="order-list" data-order-list><p class="empty-state">Loading orders…</p></div></section>
+      <section class="dashboard-card dashboard-wide" id="saved-cart" aria-labelledby="saved-cart-title"><div class="dashboard-card-heading"><div><p class="section-eyebrow">READY FOR NEXT TIME</p><h2 id="saved-cart-title">Saved basket</h2></div><a class="text-link" href="/cart_Version2.html">Open basket →</a></div><div class="saved-cart-list" data-saved-cart><p class="empty-state">Loading saved basket…</p></div></section>
+    </div>
+  </main>
+  <footer class="site-footer"><a class="store-brand footer-brand" href="/"><img class="brand-mark" src="/app-icon-192.png" alt=""><span>My<span class="brand-accent">Supermarket</span></span></a><p>Good food. Great value. Every day.</p><small>&copy; 2026 MySupermarket. All rights reserved.</small></footer>
+</body>
+</html>

@@ -32,7 +32,8 @@
     <p id="payment-reference" class="payment-reference"></p>
     <a class="primary-button" href="/product.html">Continue shopping</a>
   </main>
-  <script>
+  <script type="module">
+    import { supabase } from "/js/supabase-client.js";
     (() => {
       const params = new URLSearchParams(window.location.search);
       const reference = params.get("reference");
@@ -57,6 +58,8 @@
               title.textContent = "Payment confirmed";
               copy.textContent = "Your payment has been verified by the provider. Thank you for shopping with MySupermarket.";
               window.localStorage.removeItem("cart");
+              const { data: { session } } = await supabase.auth.getSession();
+              if (session?.user) await supabase.from("customer_cart_items").delete().eq("user_id", session.user.id);
               return;
             }
             if (response.ok && ["failed", "cancelled"].includes(result.status)) {

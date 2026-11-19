@@ -3,6 +3,7 @@ const { db } = require("../../lib/db");
 const { payheroOrders } = require("../../lib/schema");
 const { sendJson } = require("../../lib/payhero");
 const { getStripe } = require("../../lib/stripe");
+const { updateCustomerOrder } = require("../../lib/customer-account");
 
 module.exports = async function stripeWebhook(req, res) {
   if (req.method !== "POST") {
@@ -61,6 +62,7 @@ module.exports = async function stripeWebhook(req, res) {
         eq(payheroOrders.externalReference, reference),
         eq(payheroOrders.providerReference, session.id),
       ));
+    try { await updateCustomerOrder(reference, nextStatus); } catch { /* the signed webhook remains acknowledged; status can be retried */ }
   }
 
   return sendJson(res, 200, { received: true });

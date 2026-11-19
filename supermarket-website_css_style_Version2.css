@@ -21,7 +21,9 @@ button, input { font: inherit; }
 :focus-visible { outline: 3px solid #f5a700; outline-offset: 3px; }
 .offer-strip { display: flex; justify-content: space-between; gap: 12px; padding: 7px max(18px, calc((100% - 1180px) / 2)); background: var(--blue-deep); color: #fff; font-size: .72rem; font-weight: 700; }
 .site-header { position: relative; z-index: 5; background: var(--surface); box-shadow: 0 2px 8px rgba(15, 44, 77, .07); }
-.header-main { width: min(1180px, calc(100% - 36px)); min-height: 78px; margin: 0 auto; display: grid; grid-template-columns: auto auto minmax(220px, 1fr) auto; align-items: center; gap: 25px; }
+.header-main { width: min(1180px, calc(100% - 36px)); min-height: 78px; margin: 0 auto; display: grid; grid-template-columns: auto auto minmax(180px, 1fr) auto auto; align-items: center; gap: 18px; }
+.account-nav-link { color: var(--blue); font-size: .78rem; font-weight: 800; text-decoration: none; white-space: nowrap; }
+.account-nav-link:hover { color: var(--red); text-decoration: underline; }
 .store-brand { display: inline-flex; align-items: center; gap: 8px; color: var(--blue-deep); text-decoration: none; font-size: 1.08rem; font-weight: 900; letter-spacing: -.045em; white-space: nowrap; }
 .brand-mark { display: block; width: 38px; height: 38px; flex: 0 0 auto; border-radius: 7px; object-fit: cover; }
 .brand-accent { color: var(--red); }
@@ -122,7 +124,8 @@ main > button + button { margin-left: 8px; }
 .site-footer > small { font-size: .7rem; }
 @media (max-width: 680px) {
     .offer-strip { padding: 6px 14px; font-size: .64rem; }
-    .header-main { width: calc(100% - 28px); min-height: auto; padding: 12px 0 10px; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; }
+    .header-main { width: calc(100% - 28px); min-height: auto; padding: 12px 0 10px; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; }
+    .account-nav-link { font-size: .7rem; }
     .store-brand { gap: 6px; font-size: .92rem; }
     .brand-mark { width: 30px; height: 30px; }
     .delivery-link { display: none; }
