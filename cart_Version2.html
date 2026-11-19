@@ -25,7 +25,9 @@
     <title>Your basket | MySupermarket</title>
     <link rel="stylesheet" href="supermarket-website_css_style_Version2.css">
     <script src="/pwa.js" defer></script>
-    <script src="js_script_Version2.js" defer></script>
+    <script type="module" src="/js/nav-auth.js"></script>
+    <script type="module" src="js_script_Version2.js?v=account-sync"></script>
+    <script type="module" src="/js/cart-sync.js"></script>
 </head>
 <body>
 
@@ -39,6 +41,7 @@
                 <input id="store-search" name="q" type="search" placeholder="Search for products, brands and more">
                 <button type="submit" aria-label="Search">Search</button>
             </form>
+            <a class="account-nav-link" href="/login" data-account-link>Sign in</a>
             <a class="cart-link cart-active" href="cart_Version2.html" aria-label="View your cart"><span class="cart-icon" aria-hidden="true"></span><strong>Cart</strong></a>
         </div>
         <nav class="category-nav" aria-label="Shop departments">

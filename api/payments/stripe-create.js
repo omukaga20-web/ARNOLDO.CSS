@@ -3,6 +3,7 @@ const { db } = require("../../lib/db");
 const { payheroOrders } = require("../../lib/schema");
 const { getProductTotals, isSameOrigin, sendJson } = require("../../lib/payhero");
 const { getStripe } = require("../../lib/stripe");
+const { upsertCustomerOrder, updateCustomerOrder } = require("../../lib/customer-account");
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -65,6 +66,12 @@ module.exports = async function createStripeCheckout(req, res) {
     if (!createdOrder) {
       return sendJson(res, 409, { error: "This checkout was already submitted. Refresh its status before retrying." });
     }
+    try {
+      await upsertCustomerOrder({ req, reference, amount: totals.amount, items: totals.items, phoneNumber: null, paymentMethod: "card" });
+    } catch {
+      await db.update(payheroOrders).set({ status: "failed", updatedAt: new Date() }).where(eq(payheroOrders.externalReference, reference));
+      return sendJson(res, 503, { error: "Your account order could not be saved. Please start checkout again." });
+    }
   }
 
   try {
@@ -106,6 +113,7 @@ module.exports = async function createStripeCheckout(req, res) {
       await db.update(payheroOrders)
         .set({ status: "failed", updatedAt: new Date() })
         .where(eq(payheroOrders.externalReference, reference));
+      try { await updateCustomerOrder(reference, "failed"); } catch { /* payment ledger remains authoritative */ }
       return sendJson(res, 502, { error: "Stripe rejected this checkout request. Please try again." });
     }
 
