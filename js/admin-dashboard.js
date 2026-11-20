@@ -26,7 +26,10 @@ async function tokenHeaders() {
 async function adminFetch(path, options = {}) {
   const headers = await tokenHeaders();
   const response = await fetch(path, { ...options, headers: { ...headers, ...(options.headers || {}) }, cache: "no-store" });
-  if (response.status === 403) throw new Error("Administrator access is required.");
+  if (response.status === 403) {
+    const result = await response.clone().json().catch(() => ({}));
+    throw new Error(result.error || "Administrator access is required.");
+  }
   return response;
 }
 
@@ -78,7 +81,7 @@ function renderCustomers() {
       <div class="admin-user-identity"><span class="admin-user-initial" aria-hidden="true">${escapeText(initial)}</span><div><strong>${escapeText(customer.full_name || "Customer")}</strong><small>${escapeText(customer.email || "")}</small></div></div>
       <div class="admin-user-field"><label for="customer-name-${escapeText(customer.user_id)}">Full name</label><input id="customer-name-${escapeText(customer.user_id)}" name="full_name" value="${escapeText(customer.full_name || "")}" maxlength="120" required></div>
       <div class="admin-user-field"><label for="customer-phone-${escapeText(customer.user_id)}">Phone</label><input id="customer-phone-${escapeText(customer.user_id)}" name="phone_number" type="tel" value="${escapeText(customer.phone_number || "")}" maxlength="18" autocomplete="tel"></div>
-      <button class="admin-button admin-user-save" type="submit">Save changes</button>
+      <div class="admin-user-actions"><button class="admin-button admin-user-save" type="submit">Save changes</button><button class="admin-button admin-button-danger" type="button" data-delete-customer="${escapeText(customer.user_id)}">Delete account</button></div>
       <span class="sr-only" aria-live="polite" data-customer-feedback></span>
     </form>`;
   }).join("") : '<p class="admin-empty">No customer accounts match that search.</p>';
@@ -173,7 +176,11 @@ productForm.elements.product_image_file.addEventListener("change", async (event)
     event.target.value = "";
     imageStatus.textContent = "Photo uploaded. Save the product to publish it.";
   } catch (error) {
-    imageStatus.textContent = error.message || "Photo upload failed. Try again.";
+    if (productPreviewUrl) URL.revokeObjectURL(productPreviewUrl);
+    productPreviewUrl = null;
+    event.target.value = "";
+    preview.src = productForm.elements.image_url.value || "/products/fresh-milk.png";
+    imageStatus.textContent = error.message || "Photo upload failed. Choose the photo again to retry.";
   } finally {
     event.target.disabled = false;
   }
@@ -269,6 +276,33 @@ productRows.addEventListener("click", async (event) => {
     await loadDashboard();
   } catch { showStatus("Product could not be deleted. Try again.", "error"); }
   finally { deleteButton.disabled = false; }
+});
+
+customerList.addEventListener("click", async (event) => {
+  const deleteButton = event.target.closest("[data-delete-customer]");
+  if (!deleteButton) return;
+  const customer = adminData.customers.find((item) => item.user_id === deleteButton.dataset.deleteCustomer);
+  if (!customer) return;
+  const customerName = customer.full_name || customer.email || "this customer";
+  const confirmed = window.confirm(`Permanently delete ${customerName}'s account? Their sign-in, saved addresses and cart will be removed. Historical orders will be kept without a customer account link.`);
+  if (!confirmed) return;
+  const form = deleteButton.closest("[data-customer-form]");
+  const feedback = form.querySelector("[data-customer-feedback]");
+  const buttons = form.querySelectorAll("button");
+  buttons.forEach((button) => { button.disabled = true; });
+  try {
+    const response = await adminFetch("/api/admin/users", { method: "DELETE", body: JSON.stringify({ user_id: customer.user_id }) });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Customer account could not be deleted.");
+    adminData.customers = adminData.customers.filter((item) => item.user_id !== customer.user_id);
+    renderCustomers();
+    renderMetrics();
+    showStatus("Customer account deleted. Historical orders remain without a customer account link.", "success");
+  } catch (error) {
+    feedback.textContent = error.message || "Customer account could not be deleted. Try again.";
+    showStatus(feedback.textContent, "error");
+    buttons.forEach((button) => { button.disabled = false; });
+  }
 });
 
 customerList.addEventListener("submit", async (event) => {
