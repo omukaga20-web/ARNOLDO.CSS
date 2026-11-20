@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#063b76">
-    <meta name="description" content="Review your MySupermarket basket and continue to secure checkout with M-Pesa or card.">
+    <meta name="description" content="Review your MySupermarket basket and pay securely with an M-Pesa STK Push.">
     <meta name="application-name" content="MySupermarket">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -14,19 +14,19 @@
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="MySupermarket">
     <meta property="og:title" content="Your basket | MySupermarket">
-    <meta property="og:description" content="Review your basket and pay securely with M-Pesa or card.">
+    <meta property="og:description" content="Review your basket and pay securely with an M-Pesa STK Push.">
     <meta property="og:url" content="https://www.artradeslab.site/cart_Version2.html">
     <meta property="og:image" content="https://www.artradeslab.site/app-icon.png">
     <meta property="og:image:alt" content="MySupermarket shopping basket logo">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Your basket | MySupermarket">
-    <meta name="twitter:description" content="Review your basket and pay securely with M-Pesa or card.">
+    <meta name="twitter:description" content="Review your basket and pay securely with an M-Pesa STK Push.">
     <meta name="twitter:image" content="https://www.artradeslab.site/app-icon.png">
     <title>Your basket | MySupermarket</title>
     <link rel="stylesheet" href="supermarket-website_css_style_Version2.css">
     <script src="/pwa.js" defer></script>
     <script type="module" src="/js/nav-auth.js"></script>
-    <script type="module" src="js_script_Version2.js?v=account-sync"></script>
+    <script type="module" src="js_script_Version2.js?v=mpesa-stk-only"></script>
     <script type="module" src="/js/cart-sync.js"></script>
     <script type="module" src="/js/store-branding.js"></script>
 </head>
@@ -73,11 +73,6 @@
   <p class="eyebrow" id="checkout-eyebrow">Secure M-Pesa checkout</p>
   <h2 id="checkout-title">Almost yours.</h2>
   <p class="checkout-intro" id="checkout-intro">Enter your Kenyan mobile number and we&apos;ll send an STK Push to your phone.</p>
-                <label for="checkout-method">Payment method</label>
-                <select id="checkout-method" name="paymentMethod" required>
-                    <option value="mpesa">M-Pesa STK Push</option>
-                    <option value="card">Card / online payment</option>
-                </select>
                 <label for="checkout-phone" id="checkout-phone-label">M-Pesa phone number</label>
                 <input id="checkout-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="0712 345 678" pattern="[+0-9() -]{9,18}" required>
                 <p class="checkout-hint" id="checkout-hint">Use a number that can receive an M-Pesa prompt.</p>
