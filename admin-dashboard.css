@@ -85,7 +85,9 @@
 .admin-user-identity small { margin-top: 3px; color: var(--admin-muted); font-size: .65rem; }
 .admin-user-field label { display: block; margin-bottom: 3px; color: var(--admin-muted); font-size: .59rem; font-weight: 750; }
 .admin-user-field input { width: 100%; min-height: 34px; padding: 0 8px; border: 1px solid #d5dee7; border-radius: 5px; background: #fff; color: var(--admin-ink); font-size: .7rem; }
-.admin-user-save { min-height: 34px; padding-inline: 10px; font-size: .66rem; }
+.admin-user-actions { display: flex; align-items: center; gap: 7px; }
+.admin-user-save, .admin-user-actions .admin-button-danger { min-height: 34px; padding-inline: 9px; font-size: .64rem; white-space: nowrap; }
+.admin-user-actions .admin-button-danger { flex: 0 0 auto; }
 .admin-orders { display: flex; flex-direction: column; gap: 8px; }
 .admin-order { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px; border: 1px solid #eaf0f4; border-radius: 7px; background: #fbfcfd; }
 .admin-order-copy { display: flex; min-width: 0; flex-direction: column; gap: 5px; }
