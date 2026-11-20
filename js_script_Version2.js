@@ -14,8 +14,7 @@ function saveCart(cart) {
     window.dispatchEvent(new CustomEvent("cart:updated"));
 }
 
-let activeCheckoutReference = null;
-let activeCheckoutMethod = null;
+  let activeCheckoutReference = null;
 
 // Add products
 function addToCart(name, price) {
@@ -103,8 +102,7 @@ function checkout() {
 
     if (dialog && !dialog.open) dialog.showModal();
     const phoneInput = document.getElementById("checkout-phone");
-    if (phoneInput && !phoneInput.hidden) phoneInput.focus();
-    else document.getElementById("checkout-method")?.focus();
+    phoneInput?.focus();
 }
 
 function closeCheckout() {
@@ -118,7 +116,7 @@ function setCheckoutStatus(message, state = "") {
     status.dataset.state = state;
 }
 
-async function watchPayment(reference, submitButton, isCardPayment) {
+async function watchPayment(reference, submitButton) {
     for (let attempt = 0; attempt < 24; attempt += 1) {
         await new Promise((resolve) => window.setTimeout(resolve, 5000));
 
@@ -135,26 +133,24 @@ async function watchPayment(reference, submitButton, isCardPayment) {
                 window.dispatchEvent(new CustomEvent("cart:updated"));
                 displayCart();
                 activeCheckoutReference = null;
-                activeCheckoutMethod = null;
                 submitButton.disabled = true;
                 submitButton.textContent = "Payment complete";
                 return;
             }
 
             if (["failed", "cancelled"].includes(result.status)) {
-                setCheckoutStatus(isCardPayment ? "This card payment did not complete. You can safely try again." : "This M-Pesa payment did not complete. Check your phone and try again.", "error");
+                setCheckoutStatus("This M-Pesa payment did not complete. Check your phone and try again.", "error");
                 activeCheckoutReference = null;
-                activeCheckoutMethod = null;
                 submitButton.disabled = false;
                 submitButton.textContent = "Try payment again";
                 return;
             }
         } catch {
-            setCheckoutStatus(isCardPayment ? "Still waiting for secure card payment confirmation. Keep this window open." : "Still waiting for payment confirmation. Keep this window open and approve the prompt on your phone.");
+            setCheckoutStatus("Still waiting for payment confirmation. Keep this window open and approve the prompt on your phone.");
         }
     }
 
-    setCheckoutStatus(isCardPayment ? "Payment is still pending. Check the payment page before starting another request." : "Payment is still pending. Check your phone before starting another request.");
+    setCheckoutStatus("Payment is still pending. Check your phone before starting another request.");
     submitButton.disabled = false;
     submitButton.textContent = "Check payment again";
 }
@@ -163,31 +159,23 @@ async function submitCheckout(event) {
     event.preventDefault();
     const cart = getCart();
     const phoneInput = document.getElementById("checkout-phone");
-    const paymentMethod = document.getElementById("checkout-method")?.value || "mpesa";
     const submitButton = document.getElementById("checkout-submit");
 
     if (!cart.length || !phoneInput || !submitButton) return;
-    if (paymentMethod === "mpesa" && !phoneInput.value.trim()) {
+    if (!phoneInput.value.trim()) {
         phoneInput.focus();
-        return;
-    }
-
-    if (activeCheckoutReference && activeCheckoutMethod !== paymentMethod) {
-        setCheckoutStatus("Check the current payment status before switching payment methods.", "error");
         return;
     }
 
     const reference = activeCheckoutReference || crypto.randomUUID();
     activeCheckoutReference = reference;
-    activeCheckoutMethod = paymentMethod;
-    const isCardPayment = paymentMethod === "card";
     submitButton.disabled = true;
-    submitButton.textContent = isCardPayment ? "Opening secure checkout…" : "Sending request…";
-    setCheckoutStatus(isCardPayment ? "Connecting securely to Stripe…" : "Connecting securely to PayHero…");
+    submitButton.textContent = "Sending request…";
+    setCheckoutStatus("Connecting securely to PayHero…");
 
     try {
         const { data: { session } } = await supabase.auth.getSession();
-        const response = await fetch(isCardPayment ? "/api/payments/stripe-create" : "/api/payments/create", {
+        const response = await fetch("/api/payments/create", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -204,19 +192,12 @@ async function submitCheckout(event) {
 
         if (!response.ok && response.status !== 202) {
             activeCheckoutReference = null;
-            activeCheckoutMethod = null;
             throw new Error(result.error || "We could not start checkout. Please try again.");
-        }
-
-        if (isCardPayment && result.redirectUrl) {
-            window.location.assign(result.redirectUrl);
-            return;
         }
 
         if (["failed", "cancelled"].includes(result.status)) {
             activeCheckoutReference = null;
-            activeCheckoutMethod = null;
-            setCheckoutStatus(result.message || "This payment did not complete. Please try again.", "error");
+            setCheckoutStatus(result.message || "This M-Pesa payment did not complete. Check your phone and try again.", "error");
             submitButton.disabled = false;
             submitButton.textContent = "Try payment again";
             return;
@@ -224,7 +205,7 @@ async function submitCheckout(event) {
 
         setCheckoutStatus(result.message || "Check your phone and approve the M-Pesa prompt.");
         submitButton.textContent = "Waiting for payment…";
-        await watchPayment(reference, submitButton, isCardPayment);
+        await watchPayment(reference, submitButton);
     } catch (error) {
         setCheckoutStatus(error.message || "We could not start checkout. Please try again.", "error");
         submitButton.disabled = false;
@@ -238,44 +219,6 @@ function initializeStorefront() {
     displayCart();
     document.getElementById("checkout-form")?.addEventListener("submit", submitCheckout);
 
-  const paymentMethod = document.getElementById("checkout-method");
-  const phoneInput = document.getElementById("checkout-phone");
-  const phoneLabel = document.getElementById("checkout-phone-label");
-  const phoneHint = document.getElementById("checkout-hint");
-  const checkoutEyebrow = document.getElementById("checkout-eyebrow");
-  const checkoutIntro = document.getElementById("checkout-intro");
-  const checkoutSubmit = document.getElementById("checkout-submit");
-  paymentMethod?.addEventListener("change", () => {
-  const usesMpesa = paymentMethod.value === "mpesa";
-  if (phoneInput) {
-  phoneInput.required = usesMpesa;
-  phoneInput.disabled = !usesMpesa;
-  phoneInput.hidden = !usesMpesa;
-  }
-  if (phoneLabel) phoneLabel.hidden = !usesMpesa;
-  if (phoneHint) phoneHint.hidden = !usesMpesa;
-  if (checkoutEyebrow) checkoutEyebrow.textContent = usesMpesa ? "Secure M-Pesa checkout" : "Secure card checkout";
-  if (checkoutIntro) checkoutIntro.textContent = usesMpesa
-  ? "Enter your Kenyan mobile number and we’ll send an STK Push to your phone."
-  : "Pay securely with your card or another payment method available for your account.";
-  if (checkoutSubmit) checkoutSubmit.textContent = usesMpesa ? "Send payment request" : "Continue to secure checkout";
-  });
-
-  const checkoutParams = new URLSearchParams(window.location.search);
-  const cancelledReference = checkoutParams.get("reference");
-  if (
-    checkoutParams.get("payment") === "cancelled"
-    && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(cancelledReference || "")
-  ) {
-    activeCheckoutReference = cancelledReference;
-    activeCheckoutMethod = "card";
-    if (paymentMethod) {
-      paymentMethod.value = "card";
-      paymentMethod.dispatchEvent(new Event("change"));
-    }
-    setCheckoutStatus("Your previous card checkout was canceled. Your basket is saved; continue to reopen secure checkout.");
-    if (checkoutSubmit) checkoutSubmit.textContent = "Try card payment again";
-  }
 
     const searchInput = document.getElementById("store-search");
     const resultStatus = document.getElementById("product-search-status");
