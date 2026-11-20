@@ -27,6 +27,7 @@
     <script src="/pwa.js" defer></script>
     <script type="module" src="/js/nav-auth.js"></script>
     <script type="module" src="js_script_Version2.js?v=account-sync"></script>
+    <script type="module" src="/js/product-catalog.js"></script>
     <script type="module" src="/js/cart-sync.js"></script>
 </head>
 <body>
@@ -58,7 +59,7 @@
         <div class="page-heading"><p class="section-eyebrow">GOOD DEALS, GOOD DAYS</p><h1>Shop all products</h1><p>Everyday favourites, at prices you&apos;ll love.</p></div>
 
         <p id="product-search-status" class="search-result-status" role="status" aria-live="polite" hidden></p>
-        <div class="products">
+        <div class="products" data-product-grid aria-live="polite">
             <div class="product-card">
                 <div class="product-image"><img src="/products/fresh-milk.png" alt=""></div>
                 <h3>Fresh Milk</h3>

@@ -17,7 +17,10 @@ const apiHandlers = new Map([
   ["/api/payments/stripe-create", require("./api/payments/stripe-create")],
   ["/api/payments/stripe-webhook", require("./api/payments/stripe-webhook")],
   ["/api/auth/config", require("./api/auth/config")],
+  ["/api/products", require("./api/products")],
   ["/api/admin/customers", require("./api/admin/customers")],
+  ["/api/admin/products", require("./api/admin/products")],
+  ["/api/admin/users", require("./api/admin/users")],
 ]);
 
 const pageAliases = new Map([

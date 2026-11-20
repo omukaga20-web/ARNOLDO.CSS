@@ -1,14 +1,77 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#063b76"><meta name="description" content="Secure MySupermarket customer and order management.">
-  <link rel="icon" type="image/png" sizes="192x192" href="/app-icon-192.png"><link rel="stylesheet" href="/supermarket-website_css_style_Version2.css"><link rel="stylesheet" href="/account.css"><script type="module" src="/js/admin-dashboard.js"></script><title>Customer management | MySupermarket</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#082f57">
+  <meta name="description" content="Manage MySupermarket products, customer accounts and orders from one secure dashboard.">
+  <link rel="icon" type="image/png" sizes="192x192" href="/app-icon-192.png">
+  <link rel="stylesheet" href="/supermarket-website_css_style_Version2.css">
+  <link rel="stylesheet" href="/admin-dashboard.css">
+  <script type="module" src="/js/admin-dashboard.js"></script>
+  <title>Store admin | MySupermarket</title>
 </head>
-<body class="account-page dashboard-page"><div class="offer-strip"><span>MySupermarket staff</span><span>Customer management</span></div>
-  <header class="account-header"><a class="store-brand" href="/" aria-label="MySupermarket home"><img class="brand-mark" src="/app-icon-192.png" alt=""><span>My<span class="brand-accent">Supermarket</span></span></a><nav class="account-actions" aria-label="Administrator actions"><a class="account-back-link" href="/account">My account</a><button class="text-button" type="button" data-signout>Sign out</button></nav></header>
-  <main class="account-dashboard"><section class="dashboard-heading"><div><p class="section-eyebrow">ADMINISTRATION</p><h1>Customer management</h1><p class="dashboard-welcome" data-admin-welcome>Verifying administrator access…</p></div><a class="auth-submit dashboard-shop-link" href="/product">View storefront</a></section>
-    <p class="dashboard-status" data-admin-status role="status" aria-live="polite" hidden></p>
-    <section class="dashboard-card admin-section" aria-labelledby="customers-title"><div class="dashboard-card-heading"><div><p class="section-eyebrow">CUSTOMER DIRECTORY</p><h2 id="customers-title">Customers</h2></div><span class="count-badge" data-customer-count>—</span></div><div class="table-scroll"><table class="admin-table"><thead><tr><th scope="col">Customer</th><th scope="col">Phone</th><th scope="col">Joined</th></tr></thead><tbody data-customer-rows><tr><td colspan="3">Loading customer accounts…</td></tr></tbody></table></div></section>
-    <section class="dashboard-card admin-section" aria-labelledby="admin-orders-title"><div class="dashboard-card-heading"><div><p class="section-eyebrow">FULFILMENT</p><h2 id="admin-orders-title">Customer orders</h2></div><span class="count-badge" data-order-count>—</span></div><div class="admin-order-list" data-admin-order-rows><p class="empty-state">Loading orders…</p></div></section>
-  </main><footer class="site-footer"><a class="store-brand footer-brand" href="/"><img class="brand-mark" src="/app-icon-192.png" alt=""><span>My<span class="brand-accent">Supermarket</span></span></a><small>&copy; 2026 MySupermarket. Administrator activity is access-controlled.</small></footer>
-</body></html>
+<body class="admin-page">
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <a class="admin-brand" href="/" aria-label="MySupermarket home"><img class="brand-mark" src="/app-icon-192.png" alt=""><span>My<span>Supermarket</span></span></a>
+      <p class="admin-sidebar-label">Workspace</p>
+      <nav class="admin-nav" aria-label="Dashboard sections">
+        <a href="#overview" aria-current="page"><span class="admin-nav-mark" aria-hidden="true">OV</span>Overview</a>
+        <a href="#inventory"><span class="admin-nav-mark" aria-hidden="true">PR</span>Products</a>
+        <a href="#customers"><span class="admin-nav-mark" aria-hidden="true">CU</span>Customers</a>
+        <a href="#orders"><span class="admin-nav-mark" aria-hidden="true">OR</span>Orders</a>
+      </nav>
+      <div class="admin-sidebar-footer"><span class="admin-avatar" data-admin-avatar>MS</span><div><strong>Store administrator</strong><small data-admin-email>Verifying access…</small></div></div>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-topbar"><span class="admin-breadcrumb">Workspace <span aria-hidden="true">/</span> Store operations</span><div class="admin-top-actions"><a class="admin-top-link" href="/product">View storefront</a><button class="admin-signout" type="button" data-signout>Sign out</button></div></div>
+      <p class="admin-status" data-admin-status role="status" aria-live="polite" hidden></p>
+
+      <section id="overview" class="admin-heading"><div><p class="admin-eyebrow">STORE OPERATIONS</p><h1>Good day, <span data-admin-name>team</span></h1><p>Here&apos;s what&apos;s happening across your store.</p></div></section>
+      <section class="admin-metrics" aria-label="Store summary">
+        <article class="admin-metric"><span class="admin-metric-mark" aria-hidden="true">PR</span><div><small>Products</small><strong data-metric-products>—</strong></div></article>
+        <article class="admin-metric"><span class="admin-metric-mark" aria-hidden="true">ST</span><div><small>Low stock</small><strong data-metric-stock>—</strong></div></article>
+        <article class="admin-metric"><span class="admin-metric-mark" aria-hidden="true">CU</span><div><small>Customers</small><strong data-metric-customers>—</strong></div></article>
+        <article class="admin-metric"><span class="admin-metric-mark" aria-hidden="true">OR</span><div><small>Orders</small><strong data-metric-orders>—</strong></div></article>
+      </section>
+
+      <section id="inventory" class="admin-section" aria-labelledby="products-title">
+        <div class="admin-section-heading"><div><p class="admin-eyebrow">CATALOG</p><h2 id="products-title">Product inventory</h2><p class="admin-section-subtitle">Update prices and stock, or add and remove items from the storefront.</p></div><button class="admin-button" type="button" data-add-product><span aria-hidden="true">+</span> Add product</button></div>
+        <div class="admin-section-actions"><label class="sr-only" for="product-filter">Search products</label><input class="admin-search" id="product-filter" type="search" placeholder="Search products or categories" data-product-filter></div>
+        <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th scope="col">Product</th><th scope="col">Category</th><th scope="col">Price</th><th scope="col">Stock</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead><tbody data-product-rows><tr><td colspan="6">Loading product inventory…</td></tr></tbody></table></div>
+      </section>
+
+      <section id="customers" class="admin-section" aria-labelledby="customers-title">
+        <div class="admin-section-heading"><div><p class="admin-eyebrow">CUSTOMER DIRECTORY</p><h2 id="customers-title">Customer accounts</h2><p class="admin-section-subtitle">Update customer names and contact details. Email addresses remain read-only.</p></div></div>
+        <div class="admin-section-actions"><label class="sr-only" for="customer-filter">Search customers</label><input class="admin-search" id="customer-filter" type="search" placeholder="Search by name or email" data-customer-filter></div>
+        <div class="admin-user-list" data-customer-list><p class="admin-empty">Loading customer accounts…</p></div>
+      </section>
+
+      <section id="orders" class="admin-section" aria-labelledby="orders-title">
+        <div class="admin-section-heading"><div><p class="admin-eyebrow">FULFILMENT</p><h2 id="orders-title">Recent orders</h2><p class="admin-section-subtitle">Review customer checkouts and update fulfillment status.</p></div></div>
+        <div class="admin-orders" data-admin-order-rows><p class="admin-empty">Loading orders…</p></div>
+      </section>
+    </main>
+  </div>
+
+  <dialog class="admin-dialog" data-product-dialog aria-labelledby="product-dialog-title">
+    <div class="admin-dialog-content">
+      <div class="admin-dialog-header"><div><h2 id="product-dialog-title">Add a product</h2><p>Product prices are listed in Kenyan shillings.</p></div><button class="admin-close" type="button" aria-label="Close product form" data-close-product>&times;</button></div>
+      <form class="admin-product-form" data-product-form>
+        <div class="admin-form">
+          <div class="admin-form-field"><label for="product-name">Product name</label><input id="product-name" name="name" maxlength="120" required></div>
+          <div class="admin-form-field"><label for="product-category">Category</label><input id="product-category" name="category" maxlength="80" required placeholder="e.g. Bakery"></div>
+          <div class="admin-form-field"><label for="product-price">Price (KSh)</label><input id="product-price" name="price" type="number" min="1" max="10000000" step="1" required></div>
+          <div class="admin-form-field"><label for="product-stock">Stock quantity</label><input id="product-stock" name="stock_quantity" type="number" min="0" max="1000000" step="1" required></div>
+          <div class="admin-form-field admin-form-field-full"><label for="product-image">Image path or secure image URL</label><input id="product-image" name="image_url" maxlength="2048" placeholder="/products/fresh-milk.png"></div>
+          <div class="admin-form-field admin-form-field-full"><label for="product-description">Description <span>(optional)</span></label><textarea id="product-description" name="description" maxlength="500" rows="3"></textarea></div>
+          <label class="admin-check-row admin-form-field-full"><input type="checkbox" name="is_active" checked> Show this product in the storefront</label>
+        </div>
+        <div class="admin-form-actions"><button class="admin-button admin-button-secondary" type="button" data-cancel-product>Cancel</button><button class="admin-button" type="submit" data-save-product>Save product</button></div>
+      </form>
+    </div>
+  </dialog>
+</body>
+</html>
