@@ -1,53 +1,210 @@
 import { supabase } from "./supabase-client.js";
 
 const status = document.querySelector("[data-admin-status]");
+const productDialog = document.querySelector("[data-product-dialog]");
+const productForm = document.querySelector("[data-product-form]");
+const productRows = document.querySelector("[data-product-rows]");
+const customerList = document.querySelector("[data-customer-list]");
+const adminData = { products: [], customers: [], orders: [] };
+const orderStatuses = ["processing", "packed", "out_for_delivery", "delivered", "cancelled"];
+
 const showStatus = (message, kind = "") => { status.textContent = message; status.dataset.kind = kind; status.hidden = !message; };
 const escapeText = (value) => String(value ?? "").replace(/[&<>\"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[character]);
-const tokenHeaders = async () => {
+const money = (value) => `KSh ${Number(value || 0).toLocaleString("en-KE")}`;
+const date = (value) => {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? "—" : new Intl.DateTimeFormat("en-KE", { dateStyle: "medium" }).format(parsed);
+};
+
+async function tokenHeaders() {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error("Sign in to continue.");
   return { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" };
-};
-const date = (value) => new Intl.DateTimeFormat("en-KE", { dateStyle: "medium" }).format(new Date(value));
-const money = (value) => `KSh ${Number(value || 0).toLocaleString("en-KE")}`;
-const statuses = ["processing", "packed", "out_for_delivery", "delivered", "cancelled"];
-
-function renderCustomers(customers) {
-  document.querySelector("[data-customer-count]").textContent = String(customers.length);
-  const rows = document.querySelector("[data-customer-rows]");
-  rows.innerHTML = customers.length ? customers.map((customer) => `<tr><td><strong>${escapeText(customer.full_name || "Customer")}</strong><small>${escapeText(customer.email || "")}</small></td><td>${escapeText(customer.phone_number || "—")}</td><td>${date(customer.created_at)}</td></tr>`).join("") : '<tr><td colspan="3">No customer accounts yet.</td></tr>';
 }
 
-function renderOrders(orders) {
-  document.querySelector("[data-order-count]").textContent = String(orders.length);
-  const list = document.querySelector("[data-admin-order-rows]");
-  list.innerHTML = orders.length ? orders.map((order) => {
+async function adminFetch(path, options = {}) {
+  const headers = await tokenHeaders();
+  const response = await fetch(path, { ...options, headers: { ...headers, ...(options.headers || {}) }, cache: "no-store" });
+  if (response.status === 403) throw new Error("Administrator access is required.");
+  return response;
+}
+
+function renderMetrics() {
+  document.querySelector("[data-metric-products]").textContent = String(adminData.products.filter((product) => product.is_active).length);
+  document.querySelector("[data-metric-stock]").textContent = String(adminData.products.filter((product) => product.is_active && Number(product.stock_quantity) <= 5).length);
+  document.querySelector("[data-metric-customers]").textContent = adminData.customers.length.toLocaleString("en-KE");
+  document.querySelector("[data-metric-orders]").textContent = adminData.orders.length.toLocaleString("en-KE");
+}
+
+function renderProducts() {
+  const query = document.querySelector("[data-product-filter]").value.trim().toLocaleLowerCase();
+  const products = adminData.products.filter((product) => `${product.name} ${product.category}`.toLocaleLowerCase().includes(query));
+  productRows.innerHTML = products.length ? products.map((product) => {
+    const stock = Number(product.stock_quantity);
+    const stockClass = stock <= 5 ? "admin-badge admin-badge-low" : "admin-badge";
+    return `<tr>
+      <td><div class="admin-product-cell"><img class="admin-product-thumb" src="${escapeText(product.image_url)}" alt="" loading="lazy"><div><strong>${escapeText(product.name)}</strong><small>${escapeText(product.description || "")}</small></div></div></td>
+      <td>${escapeText(product.category)}</td><td>${money(product.price)}</td><td><span class="${stockClass}">${stock} in stock</span></td>
+      <td><span class="admin-badge ${product.is_active ? "" : "admin-badge-muted"}">${product.is_active ? "Live" : "Hidden"}</span></td>
+      <td><div class="admin-actions-cell"><button class="admin-button admin-button-secondary" type="button" data-edit-product="${escapeText(product.id)}">Edit</button><button class="admin-button admin-button-danger" type="button" data-delete-product="${escapeText(product.id)}">Delete</button></div></td>
+    </tr>`;
+  }).join("") : '<tr><td colspan="6" class="admin-empty">No products match that search.</td></tr>';
+  renderMetrics();
+}
+
+function renderCustomers() {
+  const query = document.querySelector("[data-customer-filter]").value.trim().toLocaleLowerCase();
+  const customers = adminData.customers.filter((customer) => `${customer.full_name} ${customer.email}`.toLocaleLowerCase().includes(query));
+  customerList.innerHTML = customers.length ? customers.map((customer) => {
+    const initial = String(customer.full_name || customer.email || "C").trim().slice(0, 1).toUpperCase();
+    return `<form class="admin-user-card" data-customer-form data-user-id="${escapeText(customer.user_id)}">
+      <div class="admin-user-identity"><span class="admin-user-initial" aria-hidden="true">${escapeText(initial)}</span><div><strong>${escapeText(customer.full_name || "Customer")}</strong><small>${escapeText(customer.email || "")}</small></div></div>
+      <div class="admin-user-field"><label for="customer-name-${escapeText(customer.user_id)}">Full name</label><input id="customer-name-${escapeText(customer.user_id)}" name="full_name" value="${escapeText(customer.full_name || "")}" maxlength="120" required></div>
+      <div class="admin-user-field"><label for="customer-phone-${escapeText(customer.user_id)}">Phone</label><input id="customer-phone-${escapeText(customer.user_id)}" name="phone_number" type="tel" value="${escapeText(customer.phone_number || "")}" maxlength="18" autocomplete="tel"></div>
+      <button class="admin-button admin-user-save" type="submit">Save changes</button>
+      <span class="sr-only" aria-live="polite" data-customer-feedback></span>
+    </form>`;
+  }).join("") : '<p class="admin-empty">No customer accounts match that search.</p>';
+}
+
+function renderOrders() {
+  const container = document.querySelector("[data-admin-order-rows]");
+  container.innerHTML = adminData.orders.length ? adminData.orders.map((order) => {
     const items = (Array.isArray(order.items) ? order.items : []).map((item) => `${escapeText(item.quantity)} × ${escapeText(item.name)}`).join(", ");
-    return `<article class="admin-order"><div class="admin-order-copy"><strong>${escapeText(order.user_id ? "Customer order" : "Guest checkout")} · ${escapeText(order.reference.slice(0, 8).toUpperCase())}</strong><small>${date(order.created_at)} · ${escapeText(items || "Items")} · ${money(order.amount)}</small><span class="status-pill status-${escapeText(order.payment_status)}">Payment: ${escapeText(order.payment_status)}</span></div><label class="sr-only" for="status-${escapeText(order.reference)}">Update order status</label><select id="status-${escapeText(order.reference)}" data-order-reference="${escapeText(order.reference)}">${statuses.map((value) => `<option value="${value}" ${order.order_status === value ? "selected" : ""}>${value.replaceAll("_", " ")}</option>`).join("")}</select></article>`;
-  }).join("") : '<p class="empty-state">No customer orders yet.</p>';
-  list.querySelectorAll("[data-order-reference]").forEach((select) => select.addEventListener("change", async () => {
-    try {
-      const headers = await tokenHeaders();
-      const response = await fetch("/api/admin/customers", { method: "PATCH", headers, body: JSON.stringify({ reference: select.dataset.orderReference, orderStatus: select.value }) });
-      if (!response.ok) throw new Error("update failed");
-      showStatus("Order status updated.", "success");
-    } catch { showStatus("We couldn’t update that order. Try again.", "error"); }
-  }));
+    return `<article class="admin-order"><div class="admin-order-copy"><strong>${escapeText(order.user_id ? "Customer order" : "Guest checkout")} · ${escapeText(String(order.reference || "").slice(0, 8).toUpperCase())}</strong><small>${date(order.created_at)} · ${escapeText(items || "Items")} · ${money(order.amount)}</small><span class="admin-badge">Payment: ${escapeText(order.payment_status)}</span></div><label class="sr-only" for="status-${escapeText(order.reference)}">Update order status</label><select id="status-${escapeText(order.reference)}" data-order-reference="${escapeText(order.reference)}">${orderStatuses.map((value) => `<option value="${value}" ${order.order_status === value ? "selected" : ""}>${value.replaceAll("_", " ")}</option>`).join("")}</select></article>`;
+  }).join("") : '<p class="admin-empty">No customer orders yet.</p>';
+  renderMetrics();
+}
+
+function openProductForm(product = null) {
+  productForm.reset();
+  productForm.elements.is_active.checked = true;
+  productForm.dataset.productId = product?.id || "";
+  document.querySelector("[data-product-dialog] #product-dialog-title").textContent = product ? "Edit product" : "Add a product";
+  document.querySelector("[data-save-product]").textContent = product ? "Save changes" : "Save product";
+  if (product) {
+    for (const key of ["name", "category", "price", "stock_quantity", "image_url", "description"]) productForm.elements[key].value = product[key] ?? "";
+    productForm.elements.is_active.checked = Boolean(product.is_active);
+  }
+  productDialog.showModal();
+  productForm.elements.name.focus();
+}
+
+async function loadDashboard() {
+  const responses = await Promise.all([
+    adminFetch("/api/admin/products"),
+    adminFetch("/api/admin/users"),
+    adminFetch("/api/admin/customers"),
+  ]);
+  if (responses.some((response) => !response.ok)) throw new Error("The dashboard could not be loaded.");
+  const [productData, userData, orderData] = await Promise.all(responses.map((response) => response.json()));
+  adminData.products = productData.products || [];
+  adminData.customers = userData.customers || [];
+  adminData.orders = orderData.orders || [];
+  renderProducts();
+  renderCustomers();
+  renderOrders();
 }
 
 async function initialize() {
   const { data: { session }, error } = await supabase.auth.getSession();
   if (error || !session?.user) { window.location.replace(`/login?next=${encodeURIComponent("/admin")}`); return; }
+  const email = session.user.email || "Administrator";
+  document.querySelector("[data-admin-email]").textContent = email;
+  document.querySelector("[data-admin-name]").textContent = (session.user.user_metadata?.full_name || session.user.user_metadata?.display_name || email.split("@")[0]).split(/[\s._-]+/)[0];
+  document.querySelector("[data-admin-avatar]").textContent = email.slice(0, 1).toUpperCase();
   try {
-    const response = await fetch("/api/admin/customers", { headers: { Authorization: `Bearer ${session.access_token}`, Accept: "application/json" }, cache: "no-store" });
-    if (response.status === 403) { showStatus("This account does not have administrator access.", "error"); document.querySelector("[data-admin-welcome]").textContent = "Access denied"; return; }
-    if (!response.ok) throw new Error("Unable to load customer data.");
-    const { customers, orders } = await response.json();
-    document.querySelector("[data-admin-welcome]").textContent = `Signed in as ${session.user.email}. Administrator access is verified for this session.`;
-    renderCustomers(customers);
-    renderOrders(orders);
-  } catch { showStatus("Customer management is temporarily unavailable. Refresh to try again.", "error"); }
+    await loadDashboard();
+  } catch (error) {
+    if (error.message === "Administrator access is required.") showStatus("This account does not have administrator access.", "error");
+    else showStatus("Store data is temporarily unavailable. Refresh to try again.", "error");
+  }
 }
 
 document.querySelector("[data-signout]").addEventListener("click", async () => { await supabase.auth.signOut(); window.location.assign("/"); });
+document.querySelector("[data-add-product]").addEventListener("click", () => openProductForm());
+document.querySelector("[data-close-product]").addEventListener("click", () => productDialog.close());
+document.querySelector("[data-cancel-product]").addEventListener("click", () => productDialog.close());
+document.querySelector("[data-product-filter]").addEventListener("input", renderProducts);
+document.querySelector("[data-customer-filter]").addEventListener("input", renderCustomers);
+
+productForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = document.querySelector("[data-save-product]");
+  button.disabled = true;
+  const formData = new FormData(productForm);
+  const product = Object.fromEntries(formData.entries());
+  product.price = Number(product.price);
+  product.stock_quantity = Number(product.stock_quantity);
+  product.is_active = formData.has("is_active");
+  product.image_url = product.image_url || "/products/fresh-milk.png";
+  const id = productForm.dataset.productId;
+  if (id) product.id = id;
+  try {
+    const response = await adminFetch("/api/admin/products", { method: id ? "PATCH" : "POST", body: JSON.stringify(product) });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Product could not be saved.");
+    productDialog.close();
+    showStatus(id ? "Product changes saved." : "Product added to your catalog.", "success");
+    await loadDashboard();
+  } catch (error) { showStatus(error.message || "Product could not be saved. Try again.", "error"); }
+  finally { button.disabled = false; }
+});
+
+productRows.addEventListener("click", async (event) => {
+  const editButton = event.target.closest("[data-edit-product]");
+  if (editButton) {
+    const product = adminData.products.find((item) => item.id === editButton.dataset.editProduct);
+    if (product) openProductForm(product);
+    return;
+  }
+  const deleteButton = event.target.closest("[data-delete-product]");
+  if (!deleteButton) return;
+  const product = adminData.products.find((item) => item.id === deleteButton.dataset.deleteProduct);
+  if (!product || !window.confirm(`Delete “${product.name}” from the catalog? This cannot be undone.`)) return;
+  deleteButton.disabled = true;
+  try {
+    const response = await adminFetch("/api/admin/products", { method: "DELETE", body: JSON.stringify({ id: product.id }) });
+    if (!response.ok) throw new Error("Product could not be deleted.");
+    showStatus(`${product.name} was removed from the catalog.`, "success");
+    await loadDashboard();
+  } catch { showStatus("Product could not be deleted. Try again.", "error"); }
+  finally { deleteButton.disabled = false; }
+});
+
+customerList.addEventListener("submit", async (event) => {
+  const form = event.target.closest("[data-customer-form]");
+  if (!form) return;
+  event.preventDefault();
+  const button = form.querySelector("[type=submit]");
+  const feedback = form.querySelector("[data-customer-feedback]");
+  button.disabled = true;
+  try {
+    const payload = Object.fromEntries(new FormData(form).entries());
+    payload.user_id = form.dataset.userId;
+    const response = await adminFetch("/api/admin/users", { method: "PATCH", body: JSON.stringify(payload) });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Customer details could not be saved.");
+    const customer = adminData.customers.find((item) => item.user_id === payload.user_id);
+    if (customer) { customer.full_name = payload.full_name.trim(); customer.phone_number = payload.phone_number.trim(); }
+    showStatus("Customer details updated.", "success");
+    renderCustomers();
+  } catch (error) {
+    feedback.textContent = error.message || "Customer details could not be saved.";
+    showStatus(feedback.textContent, "error");
+  } finally { button.disabled = false; }
+});
+
+document.querySelector("[data-admin-order-rows]").addEventListener("change", async (event) => {
+  const select = event.target.closest("[data-order-reference]");
+  if (!select) return;
+  select.disabled = true;
+  try {
+    const response = await adminFetch("/api/admin/customers", { method: "PATCH", body: JSON.stringify({ reference: select.dataset.orderReference, orderStatus: select.value }) });
+    if (!response.ok) throw new Error("Order status could not be updated.");
+    showStatus("Order status updated.", "success");
+  } catch { showStatus("Order status could not be updated. Try again.", "error"); }
+  finally { select.disabled = false; }
+});
+
 void initialize();

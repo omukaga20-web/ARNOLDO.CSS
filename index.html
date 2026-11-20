@@ -26,6 +26,7 @@
     <link rel="stylesheet" href="supermarket-website_css_style_Version2.css">
     <script src="/pwa.js" defer></script>
     <script type="module" src="/js/nav-auth.js"></script>
+    <script type="module" src="/js/product-catalog.js"></script>
 </head>
 <body>
 
@@ -112,10 +113,8 @@
 
     <section class="home-products" aria-labelledby="popular-title">
         <div class="section-heading"><div><p class="section-eyebrow">THE EVERYDAY ESSENTIALS</p><h2 id="popular-title">Popular picks</h2></div><a href="product.html" class="text-link">Shop all <span aria-hidden="true">→</span></a></div>
-        <div class="products home-product-grid">
-            <article class="product-card"><div class="product-image milk-image"><img src="/products/fresh-milk.png" alt=""></div><div class="product-info"><p class="product-category">DAIRY &amp; EGGS</p><h3>Fresh Milk</h3><p class="product-price">KSh 70</p><a class="card-button" href="product.html">Shop now</a></div></article>
-            <article class="product-card"><div class="product-image bread-image"><img src="/products/fresh-bread.png" alt=""></div><div class="product-info"><p class="product-category">BAKERY</p><h3>Fresh Bread</h3><p class="product-price">KSh 65</p><a class="card-button" href="product.html">Shop now</a></div></article>
-            <article class="product-card"><div class="product-image apple-image"><img src="/products/apples.png" alt=""></div><div class="product-info"><p class="product-category">FRUIT &amp; VEG</p><h3>Red Apples</h3><p class="product-price">KSh 30</p><a class="card-button" href="product.html">Shop now</a></div></article>
+        <div class="products home-product-grid" data-product-grid data-featured-products aria-live="polite">
+            <p class="catalog-empty">Loading popular picks…</p>
         </div>
     </section>
 </main>

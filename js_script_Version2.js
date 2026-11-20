@@ -36,6 +36,8 @@ function addToCart(name, price) {
     alert(name + " added to cart!");
 }
 
+window.addToCart = addToCart;
+
 function displayCart() {
     const cart = getCart();
     const container = document.getElementById("cart-items");
@@ -277,13 +279,13 @@ function initializeStorefront() {
 
     const searchInput = document.getElementById("store-search");
     const resultStatus = document.getElementById("product-search-status");
-    const productCards = Array.from(document.querySelectorAll(".products .product-card"));
     const initialQuery = new URLSearchParams(window.location.search).get("q") || "";
 
-    if (searchInput && productCards.length) {
+    if (searchInput) {
         searchInput.value = initialQuery;
         const filterProducts = () => {
             const query = searchInput.value.trim().toLocaleLowerCase();
+            const productCards = Array.from(document.querySelectorAll(".products:not([data-featured-products]) .product-card"));
             let visibleCount = 0;
 
             productCards.forEach((card) => {
