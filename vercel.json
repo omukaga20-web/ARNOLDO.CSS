@@ -1,6 +1,10 @@
 {
   "outputDirectory": ".",
   "cleanUrls": true,
+  "rewrites": [
+    { "source": "/api/products", "destination": "/api/storefront?resource=products" },
+    { "source": "/api/store-branding", "destination": "/api/storefront?resource=branding" }
+  ],
   "functions": {
     "api/payments/*.js": {
       "maxDuration": 30

@@ -17,13 +17,13 @@ const apiHandlers = new Map([
   ["/api/payments/stripe-create", require("./api/payments/stripe-create")],
   ["/api/payments/stripe-webhook", require("./api/payments/stripe-webhook")],
   ["/api/auth/config", require("./api/auth/config")],
-  ["/api/products", require("./api/products")],
+  ["/api/products", require("./api/storefront")],
   ["/api/admin/customers", require("./api/admin/customers")],
   ["/api/admin/products", require("./api/admin/products")],
   ["/api/admin/users", require("./api/admin/users")],
   ["/api/admin/uploads", require("./api/admin/uploads")],
   ["/api/admin/branding", require("./api/admin/branding")],
-  ["/api/store-branding", require("./api/store-branding")],
+  ["/api/store-branding", require("./api/storefront")],
 ]);
 
 const pageAliases = new Map([
