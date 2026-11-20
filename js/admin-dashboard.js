@@ -3,6 +3,7 @@ import { supabase } from "./supabase-client.js";
 const status = document.querySelector("[data-admin-status]");
 const productDialog = document.querySelector("[data-product-dialog]");
 const productForm = document.querySelector("[data-product-form]");
+const brandingForm = document.querySelector("[data-branding-form]");
 const productRows = document.querySelector("[data-product-rows]");
 const customerList = document.querySelector("[data-customer-list]");
 const adminData = { products: [], customers: [], orders: [] };
@@ -27,6 +28,22 @@ async function adminFetch(path, options = {}) {
   const response = await fetch(path, { ...options, headers: { ...headers, ...(options.headers || {}) }, cache: "no-store" });
   if (response.status === 403) throw new Error("Administrator access is required.");
   return response;
+}
+
+async function uploadImage(file, purpose) {
+  if (!file || file.size === 0) throw new Error("Choose an image to upload.");
+  if (file.size > 4 * 1024 * 1024) throw new Error("Images must be 4 MB or smaller.");
+  if (!new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]).has(file.type)) {
+    throw new Error("Choose a PNG, JPEG, WebP or GIF image.");
+  }
+  const response = await adminFetch(`/api/admin/uploads?purpose=${purpose}`, {
+    method: "POST",
+    headers: { "Content-Type": file.type },
+    body: file,
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || "Image upload failed. Try again.");
+  return result.url;
 }
 
 function renderMetrics() {
@@ -86,6 +103,8 @@ function openProductForm(product = null) {
     for (const key of ["name", "category", "price", "stock_quantity", "image_url", "description"]) productForm.elements[key].value = product[key] ?? "";
     productForm.elements.is_active.checked = Boolean(product.is_active);
   }
+  document.querySelector("[data-product-image-preview]").src = product?.image_url || "/products/fresh-milk.png";
+  document.querySelector("[data-product-image-status]").textContent = product?.image_url ? "Current product photo." : "Select a photo to upload it.";
   productDialog.showModal();
   productForm.elements.name.focus();
 }
@@ -106,6 +125,17 @@ async function loadDashboard() {
   renderOrders();
 }
 
+async function loadBranding() {
+  try {
+    const response = await fetch("/api/store-branding", { headers: { Accept: "application/json" }, cache: "no-store" });
+    if (!response.ok) return;
+    const { logo_url: logoUrl } = await response.json();
+    document.querySelector("[data-brand-preview]").src = logoUrl || "/app-icon-192.png";
+  } catch {
+    document.querySelector("[data-brand-preview]").src = "/app-icon-192.png";
+  }
+}
+
 async function initialize() {
   const { data: { session }, error } = await supabase.auth.getSession();
   if (error || !session?.user) { window.location.replace(`/login?next=${encodeURIComponent("/admin")}`); return; }
@@ -114,7 +144,7 @@ async function initialize() {
   document.querySelector("[data-admin-name]").textContent = (session.user.user_metadata?.full_name || session.user.user_metadata?.display_name || email.split("@")[0]).split(/[\s._-]+/)[0];
   document.querySelector("[data-admin-avatar]").textContent = email.slice(0, 1).toUpperCase();
   try {
-    await loadDashboard();
+    await Promise.all([loadDashboard(), loadBranding()]);
   } catch (error) {
     if (error.message === "Administrator access is required.") showStatus("This account does not have administrator access.", "error");
     else showStatus("Store data is temporarily unavailable. Refresh to try again.", "error");
@@ -123,6 +153,31 @@ async function initialize() {
 
 document.querySelector("[data-signout]").addEventListener("click", async () => { await supabase.auth.signOut(); window.location.assign("/"); });
 document.querySelector("[data-add-product]").addEventListener("click", () => openProductForm());
+let productPreviewUrl = null;
+productForm.elements.product_image_file.addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+  const preview = document.querySelector("[data-product-image-preview]");
+  const imageStatus = document.querySelector("[data-product-image-status]");
+  if (productPreviewUrl) URL.revokeObjectURL(productPreviewUrl);
+  productPreviewUrl = URL.createObjectURL(file);
+  preview.src = productPreviewUrl;
+  event.target.disabled = true;
+  imageStatus.textContent = "Uploading photo…";
+  try {
+    const url = await uploadImage(file, "product");
+    productForm.elements.image_url.value = url;
+    preview.src = url;
+    URL.revokeObjectURL(productPreviewUrl);
+    productPreviewUrl = null;
+    event.target.value = "";
+    imageStatus.textContent = "Photo uploaded. Save the product to publish it.";
+  } catch (error) {
+    imageStatus.textContent = error.message || "Photo upload failed. Try again.";
+  } finally {
+    event.target.disabled = false;
+  }
+});
 document.querySelector("[data-close-product]").addEventListener("click", () => productDialog.close());
 document.querySelector("[data-cancel-product]").addEventListener("click", () => productDialog.close());
 document.querySelector("[data-product-filter]").addEventListener("input", renderProducts);
@@ -130,10 +185,15 @@ document.querySelector("[data-customer-filter]").addEventListener("input", rende
 
 productForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (productForm.elements.product_image_file.files.length) {
+    showStatus("Wait for the product photo to finish uploading, then save the product.", "error");
+    return;
+  }
   const button = document.querySelector("[data-save-product]");
   button.disabled = true;
   const formData = new FormData(productForm);
   const product = Object.fromEntries(formData.entries());
+  delete product.product_image_file;
   product.price = Number(product.price);
   product.stock_quantity = Number(product.stock_quantity);
   product.is_active = formData.has("is_active");
@@ -149,6 +209,45 @@ productForm.addEventListener("submit", async (event) => {
     await loadDashboard();
   } catch (error) { showStatus(error.message || "Product could not be saved. Try again.", "error"); }
   finally { button.disabled = false; }
+});
+
+let logoPreviewUrl = null;
+brandingForm.elements.logo_file.addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  const saveButton = document.querySelector("[data-save-branding]");
+  if (!file) { saveButton.disabled = true; return; }
+  if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl);
+  logoPreviewUrl = URL.createObjectURL(file);
+  document.querySelector("[data-brand-preview]").src = logoPreviewUrl;
+  saveButton.disabled = false;
+});
+
+brandingForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const input = brandingForm.elements.logo_file;
+  const button = document.querySelector("[data-save-branding]");
+  const file = input.files[0];
+  if (!file) return;
+  button.disabled = true;
+  try {
+    const logoUrl = await uploadImage(file, "logo");
+    const response = await adminFetch("/api/admin/branding", {
+      method: "POST",
+      body: JSON.stringify({ logo_url: logoUrl }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Store branding could not be saved.");
+    document.querySelector("[data-brand-preview]").src = logoUrl;
+    window.dispatchEvent(new CustomEvent("store-branding:updated", { detail: { logoUrl } }));
+    input.value = "";
+    if (logoPreviewUrl) URL.revokeObjectURL(logoPreviewUrl);
+    logoPreviewUrl = null;
+    showStatus("Website logo updated across the storefront.", "success");
+  } catch (error) {
+    showStatus(error.message || "Website logo could not be updated. Try again.", "error");
+  } finally {
+    button.disabled = !input.files.length;
+  }
 });
 
 productRows.addEventListener("click", async (event) => {

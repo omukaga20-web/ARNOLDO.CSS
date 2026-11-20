@@ -21,6 +21,9 @@ const apiHandlers = new Map([
   ["/api/admin/customers", require("./api/admin/customers")],
   ["/api/admin/products", require("./api/admin/products")],
   ["/api/admin/users", require("./api/admin/users")],
+  ["/api/admin/uploads", require("./api/admin/uploads")],
+  ["/api/admin/branding", require("./api/admin/branding")],
+  ["/api/store-branding", require("./api/store-branding")],
 ]);
 
 const pageAliases = new Map([
@@ -52,13 +55,17 @@ function sendJson(res, statusCode, payload) {
   res.end(JSON.stringify(payload));
 }
 
-async function readRawBody(req) {
+async function readRawBody(req, maxBytes = 1024 * 1024) {
   const chunks = [];
   let size = 0;
 
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > 1024 * 1024) throw new Error("Request body is too large.");
+    if (size > maxBytes) {
+      const error = new Error("Images must be 5 MB or smaller.");
+      error.statusCode = 413;
+      throw error;
+    }
     chunks.push(chunk);
   }
 
@@ -75,11 +82,12 @@ async function handleApi(req, res, url, handler) {
   req.query = Object.fromEntries(url.searchParams.entries());
 
   try {
-    req.body = url.pathname.replace(/\/$/, "") === "/api/payments/stripe-webhook"
-      ? await readRawBody(req)
-      : await readJsonBody(req);
-  } catch {
-    return sendJson(res, 400, { error: "Invalid request body." });
+    const route = url.pathname.replace(/\/$/, "");
+    if (route === "/api/payments/stripe-webhook") req.body = await readRawBody(req);
+    else if (route === "/api/admin/uploads") req.body = await readRawBody(req, 4 * 1024 * 1024);
+    else req.body = await readJsonBody(req);
+  } catch (error) {
+    return sendJson(res, error.statusCode || 400, { error: error.statusCode ? error.message : "Invalid request body." });
   }
 
   const responseAdapter = {
