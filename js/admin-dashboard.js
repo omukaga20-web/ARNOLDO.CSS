@@ -33,20 +33,57 @@ async function adminFetch(path, options = {}) {
   return response;
 }
 
-async function uploadImage(file, purpose) {
+async function uploadImage(file, purpose, onProgress = () => {}) {
   if (!file || file.size === 0) throw new Error("Choose an image to upload.");
   if (file.size > 4 * 1024 * 1024) throw new Error("Images must be 4 MB or smaller.");
-  if (!new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]).has(file.type)) {
-    throw new Error("Choose a PNG, JPEG, WebP or GIF image.");
+  if (!new Set(["image/jpeg", "image/png", "image/webp"]).has(file.type)) {
+    throw new Error("Choose a JPG, PNG or WebP image.");
   }
-  const response = await adminFetch(`/api/admin/uploads?purpose=${purpose}`, {
-    method: "POST",
-    headers: { "Content-Type": file.type },
-    body: file,
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error("Sign in to continue.");
+
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("POST", `/api/admin/uploads?purpose=${encodeURIComponent(purpose)}`);
+    request.setRequestHeader("Authorization", `Bearer ${session.access_token}`);
+    request.setRequestHeader("Content-Type", file.type);
+    request.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
+    });
+    request.addEventListener("load", () => {
+      let result = {};
+      try { result = JSON.parse(request.responseText || "{}"); } catch { /* use the fallback upload error */ }
+      if (request.status < 200 || request.status >= 300) {
+        reject(new Error(result.error || "Image upload failed. Try again."));
+        return;
+      }
+      resolve(result);
+    });
+    request.addEventListener("error", () => reject(new Error("Network error while uploading the image. Try again.")));
+    request.addEventListener("timeout", () => reject(new Error("Image upload timed out. Try again.")));
+    request.timeout = 45000;
+    request.send(file);
   });
-  const result = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(result.error || "Image upload failed. Try again.");
-  return result.url;
+}
+
+function getManagedProductImagePath(imageUrl) {
+  try {
+    const path = new URL(imageUrl, window.location.origin).pathname;
+    const match = path.match(/\/storage\/v1\/object\/public\/product-images\/(store\/product\/[0-9a-f-]+\.(?:jpg|png|webp))/i);
+    return match ? decodeURIComponent(match[1]) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function removeManagedProductImage(imageUrl) {
+  const objectPath = getManagedProductImagePath(imageUrl);
+  if (!objectPath) return;
+  await fetch(`/api/admin/uploads?purpose=product&object=${encodeURIComponent(objectPath)}`, {
+    method: "DELETE",
+    headers: await tokenHeaders(),
+    cache: "no-store",
+  });
 }
 
 function renderMetrics() {
@@ -63,7 +100,7 @@ function renderProducts() {
     const stock = Number(product.stock_quantity);
     const stockClass = stock <= 5 ? "admin-badge admin-badge-low" : "admin-badge";
     return `<tr>
-      <td><div class="admin-product-cell"><img class="admin-product-thumb" src="${escapeText(product.image_url)}" alt="" loading="lazy"><div><strong>${escapeText(product.name)}</strong><small>${escapeText(product.description || "")}</small></div></div></td>
+      <td><div class="admin-product-cell"><img class="admin-product-thumb" src="${escapeText(product.image_url || "/images/product-fallback.svg")}" alt="" loading="lazy" onerror="this.onerror=null;this.src='/images/product-fallback.svg'"><div><strong>${escapeText(product.name)}</strong><small>${escapeText(product.description || "")}</small></div></div></td>
       <td>${escapeText(product.category)}</td><td>${money(product.price)}</td><td><span class="${stockClass}">${stock} in stock</span></td>
       <td><span class="admin-badge ${product.is_active ? "" : "admin-badge-muted"}">${product.is_active ? "Live" : "Hidden"}</span></td>
       <td><div class="admin-actions-cell"><button class="admin-button admin-button-secondary" type="button" data-edit-product="${escapeText(product.id)}">Edit</button><button class="admin-button admin-button-danger" type="button" data-delete-product="${escapeText(product.id)}">Delete</button></div></td>
@@ -100,14 +137,15 @@ function openProductForm(product = null) {
   productForm.reset();
   productForm.elements.is_active.checked = true;
   productForm.dataset.productId = product?.id || "";
+  productForm.dataset.originalImageUrl = product?.image_url || "";
   document.querySelector("[data-product-dialog] #product-dialog-title").textContent = product ? "Edit product" : "Add a product";
   document.querySelector("[data-save-product]").textContent = product ? "Save changes" : "Save product";
   if (product) {
     for (const key of ["name", "category", "price", "stock_quantity", "image_url", "description"]) productForm.elements[key].value = product[key] ?? "";
     productForm.elements.is_active.checked = Boolean(product.is_active);
   }
-  document.querySelector("[data-product-image-preview]").src = product?.image_url || "/products/fresh-milk.png";
-  document.querySelector("[data-product-image-status]").textContent = product?.image_url ? "Current product photo." : "Select a photo to upload it.";
+  document.querySelector("[data-product-image-preview]").src = product?.image_url || "/images/product-fallback.svg";
+  document.querySelector("[data-product-image-status]").textContent = product?.image_url ? "Current product photo." : "Choose a JPG, PNG or WebP image (4 MB maximum).";
   productDialog.showModal();
   productForm.elements.name.focus();
 }
@@ -166,9 +204,11 @@ productForm.elements.product_image_file.addEventListener("change", async (event)
   productPreviewUrl = URL.createObjectURL(file);
   preview.src = productPreviewUrl;
   event.target.disabled = true;
-  imageStatus.textContent = "Uploading photo…";
+  imageStatus.textContent = "Uploading photo… 0%";
   try {
-    const url = await uploadImage(file, "product");
+    const { url } = await uploadImage(file, "product", (progress) => {
+      imageStatus.textContent = `Uploading photo… ${progress}%`;
+    });
     productForm.elements.image_url.value = url;
     preview.src = url;
     URL.revokeObjectURL(productPreviewUrl);
@@ -179,11 +219,16 @@ productForm.elements.product_image_file.addEventListener("change", async (event)
     if (productPreviewUrl) URL.revokeObjectURL(productPreviewUrl);
     productPreviewUrl = null;
     event.target.value = "";
-    preview.src = productForm.elements.image_url.value || "/products/fresh-milk.png";
+    preview.src = productForm.elements.image_url.value || "/images/product-fallback.svg";
     imageStatus.textContent = error.message || "Photo upload failed. Choose the photo again to retry.";
   } finally {
     event.target.disabled = false;
   }
+});
+document.querySelector("[data-remove-product-image]").addEventListener("click", () => {
+  productForm.elements.image_url.value = "";
+  document.querySelector("[data-product-image-preview]").src = "/images/product-fallback.svg";
+  document.querySelector("[data-product-image-status]").textContent = "Photo removed. Save the product to publish the change.";
 });
 document.querySelector("[data-close-product]").addEventListener("click", () => productDialog.close());
 document.querySelector("[data-cancel-product]").addEventListener("click", () => productDialog.close());
@@ -204,13 +249,15 @@ productForm.addEventListener("submit", async (event) => {
   product.price = Number(product.price);
   product.stock_quantity = Number(product.stock_quantity);
   product.is_active = formData.has("is_active");
-  product.image_url = product.image_url || "/products/fresh-milk.png";
+  product.image_url = product.image_url || "/images/product-fallback.svg";
+  const previousImageUrl = productForm.dataset.originalImageUrl || "";
   const id = productForm.dataset.productId;
   if (id) product.id = id;
   try {
     const response = await adminFetch("/api/admin/products", { method: id ? "PATCH" : "POST", body: JSON.stringify(product) });
     const result = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(result.error || "Product could not be saved.");
+    if (previousImageUrl && previousImageUrl !== product.image_url) await removeManagedProductImage(previousImageUrl).catch(() => {});
     productDialog.close();
     showStatus(id ? "Product changes saved." : "Product added to your catalog.", "success");
     await loadDashboard();
@@ -237,7 +284,10 @@ brandingForm.addEventListener("submit", async (event) => {
   if (!file) return;
   button.disabled = true;
   try {
-    const logoUrl = await uploadImage(file, "logo");
+    showStatus("Uploading website logo… 0%", "success");
+    const { url: logoUrl } = await uploadImage(file, "logo", (progress) => {
+      showStatus(`Uploading website logo… ${progress}%`, "success");
+    });
     const response = await adminFetch("/api/admin/branding", {
       method: "POST",
       body: JSON.stringify({ logo_url: logoUrl }),

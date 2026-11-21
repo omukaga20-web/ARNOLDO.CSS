@@ -3,6 +3,10 @@ const DEFAULT_LOGO = "/app-icon-192.png";
 function applyLogo(logoUrl) {
   const source = logoUrl || DEFAULT_LOGO;
   document.querySelectorAll(".brand-mark, .auth-logo img, .app-install-dialog-content > img").forEach((image) => {
+    image.onerror = () => {
+      image.onerror = null;
+      image.src = DEFAULT_LOGO;
+    };
     image.src = source;
   });
   document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach((icon) => {

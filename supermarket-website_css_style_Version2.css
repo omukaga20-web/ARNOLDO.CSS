@@ -46,7 +46,7 @@ button, input { font: inherit; }
 .category-link { position: relative; display: flex; flex: 0 0 auto; align-items: center; color: #34475e; text-decoration: none; font-size: .8rem; font-weight: 700; }
 .category-link:hover, .category-active { color: var(--red); }
 .category-active::after { position: absolute; right: 0; bottom: 0; left: 0; height: 3px; background: var(--red); content: ""; }
-.hero-banner { position: relative; display: flex; width: min(1180px, calc(100% - 36px)); min-height: 385px; margin: 24px auto 0; align-items: center; padding: clamp(30px, 6vw, 72px); overflow: hidden; border-radius: 10px; background: linear-gradient(90deg, rgba(5, 35, 72, .91) 0%, rgba(5, 48, 88, .75) 42%, rgba(6, 48, 83, .05) 100%), url("https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1800&q=85") center 54%/cover no-repeat; color: white; }
+.hero-banner { position: relative; display: flex; width: min(1180px, calc(100% - 36px)); min-height: 385px; margin: 24px auto 0; align-items: center; padding: clamp(30px, 6vw, 72px); overflow: hidden; border-radius: 10px; background: linear-gradient(90deg, rgba(5, 35, 72, .91) 0%, rgba(5, 48, 88, .75) 42%, rgba(6, 48, 83, .05) 100%), url("/images/grocery-hero.png") center 54%/cover no-repeat; color: white; }
 .hero-content { position: relative; z-index: 1; max-width: 510px; }
 .hero-kicker, .section-eyebrow { margin: 0 0 9px; color: var(--red); font-size: .68rem; font-weight: 900; letter-spacing: .11em; }
 .hero-kicker { display: flex; align-items: center; gap: 8px; color: var(--yellow); }
