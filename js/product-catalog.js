@@ -13,10 +13,13 @@ function makeCard(product, featured) {
   const imageFrame = document.createElement("div");
   imageFrame.className = "product-image";
   const image = document.createElement("img");
-  image.src = product.image_url || "/app-icon-192.png";
+  image.src = product.image_url || "/images/product-fallback.svg";
   image.alt = product.name;
   image.loading = "lazy";
-  image.addEventListener("error", () => { image.src = "/app-icon-192.png"; image.alt = "MySupermarket"; }, { once: true });
+  image.addEventListener("error", () => {
+    image.src = "/images/product-fallback.svg";
+    image.alt = `${product.name} image unavailable`;
+  }, { once: true });
   imageFrame.append(image);
 
   const info = document.createElement("div");

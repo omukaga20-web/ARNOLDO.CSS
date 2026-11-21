@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" role="img" aria-labelledby="title description">
+  <title id="title">Fresh groceries</title>
+  <desc id="description">Illustration of a grocery bag with fresh produce.</desc>
+  <rect width="640" height="480" rx="28" fill="#f1f6f0"/>
+  <circle cx="320" cy="230" r="150" fill="#e2eee0"/>
+  <path d="M213 201h214l-17 178H230z" fill="#fff" stroke="#1e6848" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M264 203c0-43 25-73 56-73s56 30 56 73" fill="none" stroke="#1e6848" stroke-width="11" stroke-linecap="round"/>
+  <path d="M299 190c-26-34-16-73 16-91 22 31 18 65-16 91z" fill="#63a765"/>
+  <path d="M325 192c6-42 38-60 72-48-6 39-34 59-72 48z" fill="#83b970"/>
+  <path d="M319 190v-69m5 69 36-45" fill="none" stroke="#34784b" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="278" cy="240" r="25" fill="#ec7250"/><circle cx="360" cy="249" r="23" fill="#e5a644"/>
+  <path d="M305 328c-17-21-13-47 8-55 20 8 25 34 8 55-5 6-11 6-16 0z" fill="#83b970"/>
+  <text x="320" y="432" text-anchor="middle" fill="#315e45" font-family="Arial, sans-serif" font-size="24" font-weight="600">Fresh pick coming soon</text>
+</svg>

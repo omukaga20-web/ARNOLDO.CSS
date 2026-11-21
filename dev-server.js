@@ -128,7 +128,7 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname === "/") pathname = "/index.html";
   else pathname = pageAliases.get(pathname) || pathname;
-  if (pathname.startsWith("/products/")) pathname = `/public${pathname}`;
+  if (pathname.startsWith("/products/") || pathname.startsWith("/images/")) pathname = `/public${pathname}`;
   if (["/app-icon.png", "/app-icon-192.png", "/app-icon-512.png"].includes(pathname)) pathname = `/public${pathname}`;
   const filePath = path.resolve(projectRoot, `.${pathname}`);
   const hasHiddenSegment = pathname.split(path.sep).some((segment) => segment.startsWith("."));

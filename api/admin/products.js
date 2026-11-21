@@ -12,7 +12,7 @@ function validateProduct(body) {
   const name = String(body.name || "").trim();
   const category = String(body.category || "").trim();
   const description = String(body.description || "").trim();
-  const imageUrl = String(body.image_url || "/products/fresh-milk.png").trim();
+  const imageUrl = String(body.image_url || "/images/product-fallback.svg").trim();
   const price = Number(body.price);
   const stock = Number(body.stock_quantity);
   const imageIsValid = IMAGE_PATH.test(imageUrl) || (() => {
