@@ -1,4 +1,4 @@
-const CACHE_NAME = "mysupermarket-shell-v4";
+const CACHE_NAME = "mysupermarket-shell-v5";
 const OFFLINE_URL = "/offline.html";
 const APP_SHELL = [
   "/",

@@ -24,6 +24,7 @@ const apiHandlers = new Map([
   ["/api/admin/uploads", require("./api/admin/uploads")],
   ["/api/admin/branding", require("./api/admin/branding")],
   ["/api/store-branding", require("./api/storefront")],
+  ["/api/app-qr-code", require("./api/app-qr-code")],
 ]);
 
 const pageAliases = new Map([
@@ -100,6 +101,10 @@ async function handleApi(req, res, url, handler) {
       res.end(JSON.stringify(payload));
       return this;
     },
+    end(payload) {
+      res.end(payload);
+      return this;
+    }
   };
 
   try {

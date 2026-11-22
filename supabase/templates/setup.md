@@ -1,13 +1,13 @@
-# FAIDI STORES authentication email setup
+# MySupermarket authentication email setup
 
-The HTML files in this folder are copy-ready Supabase Auth templates. They keep Supabase's required `{{ .ConfirmationURL }}` action link intact and use the FAIDI STORES name and green storefront style. The password-change and security-alert files are branded notification drafts; they are not sent by Supabase's built-in signup/reset templates. Enable the corresponding Auth notification or a Send Email Hook before expecting those alerts to send.
+The HTML files in this folder are copy-ready Supabase Auth templates. They keep Supabase's required `{{ .ConfirmationURL }}` action link intact and use the MySupermarket name and green storefront style. The password-change and security-alert files are branded notification drafts; they are not sent by Supabase's built-in signup/reset templates. Enable the corresponding Auth notification or a Send Email Hook before expecting those alerts to send.
 
 ## Configure SMTP and the sender
 
 SMTP credentials are external account secrets and are intentionally not stored in this repository or the website.
 
 1. In the Supabase dashboard, open **Authentication → SMTP Settings** (or **Settings → Authentication → SMTP** in the current dashboard) and enable custom SMTP.
-2. Set **Sender name** to `FAIDI STORES` and **Sender email** to `faidiagrostores@gmail.com` if sending from the existing Gmail account.
+2. Set **Sender name** to `MySupermarket` and **Sender email** to `faidiagrostores@gmail.com` if sending from the existing Gmail account.
 3. To keep that exact Gmail address, use Gmail SMTP: enable 2-Step Verification on the business Google account, create a Google **App Password**, and use `smtp.gmail.com`, port `465` with SSL (or `587` with STARTTLS), the full Gmail address as username, and the App Password as the password. Paste it only into Supabase's SMTP settings; never into this repository. Google may require an eligible Workspace/account configuration for app passwords.
 4. Save and use Supabase's email test/send-a-test flow to check delivery, spam placement, and branding at an inbox you control.
 
