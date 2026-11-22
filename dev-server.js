@@ -24,7 +24,7 @@ const apiHandlers = new Map([
   ["/api/admin/uploads", require("./api/admin/uploads")],
   ["/api/admin/branding", require("./api/admin/branding")],
   ["/api/store-branding", require("./api/storefront")],
-  ["/api/app-qr-code", require("./api/app-qr-code")],
+  ["/api/app-qr-code", require("./api/storefront")],
 ]);
 
 const pageAliases = new Map([
