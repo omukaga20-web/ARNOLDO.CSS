@@ -3,7 +3,8 @@
   "cleanUrls": true,
   "rewrites": [
     { "source": "/api/products", "destination": "/api/storefront?resource=products" },
-    { "source": "/api/store-branding", "destination": "/api/storefront?resource=branding" }
+    { "source": "/api/store-branding", "destination": "/api/storefront?resource=branding" },
+    { "source": "/api/app-qr-code", "destination": "/api/auth/config?resource=qr-code" }
   ],
   "functions": {
     "api/payments/*.js": {
