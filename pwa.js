@@ -14,7 +14,7 @@
 
   if (window.location.origin && document.getElementById("app-qr-code")) {
     const installUrl = `${window.location.origin}/#download-app`;
-    document.getElementById("app-qr-code").src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=8&data=${encodeURIComponent(installUrl)}`;
+    document.getElementById("app-qr-code").src = "/api/app-qr-code";
     document.getElementById("app-qr-code").alt = `QR code linking to ${installUrl}`;
   }
 
