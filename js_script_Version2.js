@@ -213,10 +213,11 @@ async function submitCheckout(event) {
     }
 }
 
-Object.assign(window, { addToCart, displayCart, removeItem, clearCart, checkout, closeCheckout });
-
 function initializeStorefront() {
     displayCart();
+    document.getElementById("clear-cart")?.addEventListener("click", clearCart);
+    document.getElementById("proceed-to-checkout")?.addEventListener("click", checkout);
+    document.querySelector(".dialog-close")?.addEventListener("click", closeCheckout);
     document.getElementById("checkout-form")?.addEventListener("submit", submitCheckout);
 
 

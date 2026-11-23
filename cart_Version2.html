@@ -64,12 +64,12 @@
 
         <h3 id="cart-total">Total: KSh 0</h3>
 
-        <button type="button" onclick="clearCart()">Clear Cart</button>
-        <button type="button" onclick="checkout()">Proceed to Checkout</button>
+        <button id="clear-cart" type="button">Clear Cart</button>
+        <button id="proceed-to-checkout" type="button">Proceed to Checkout</button>
 
         <dialog id="checkout-dialog" class="checkout-dialog" aria-labelledby="checkout-title">
             <form id="checkout-form" class="checkout-form">
-                <button class="dialog-close" type="button" aria-label="Close checkout" onclick="closeCheckout()">×</button>
+                <button class="dialog-close" type="button" aria-label="Close checkout">×</button>
   <p class="eyebrow" id="checkout-eyebrow">Secure M-Pesa checkout</p>
   <h2 id="checkout-title">Almost yours.</h2>
   <p class="checkout-intro" id="checkout-intro">Enter your Kenyan mobile number and we&apos;ll send an STK Push to your phone.</p>
