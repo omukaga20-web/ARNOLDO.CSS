@@ -1,7 +1,7 @@
 const { and, eq, gte, sql } = require("drizzle-orm");
 const { db } = require("../../lib/db");
 const { payheroOrders } = require("../../lib/schema");
-const { upsertCustomerOrder, updateCustomerOrder } = require("../../lib/customer-account");
+const { adminRequest, upsertCustomerOrder, updateCustomerOrder } = require("../../lib/customer-account");
 const {
   PAYHERO_API,
   getCallbackUrl,
@@ -35,7 +35,6 @@ module.exports = async function createPayment(req, res) {
 
   const reference = body.reference;
   const phoneNumber = normalizePhoneNumber(body.phoneNumber);
-  const totals = getProductTotals(body.items);
 
   if (!UUID_PATTERN.test(String(reference || ""))) {
     return sendJson(res, 400, { error: "Invalid checkout reference." });
@@ -43,8 +42,20 @@ module.exports = async function createPayment(req, res) {
   if (!phoneNumber) {
     return sendJson(res, 400, { error: "Enter a valid Kenyan mobile number, such as 0712345678." });
   }
+  if (!Array.isArray(body.items) || body.items.length < 1 || body.items.length > 20) {
+    return sendJson(res, 400, { error: "Your cart is empty or invalid. Refresh the cart and try again." });
+  }
+
+  let catalog;
+  try {
+    catalog = await adminRequest("store_products?select=name,price,stock_quantity&is_active=eq.true");
+  } catch {
+    return sendJson(res, 503, { error: "The product catalog is temporarily unavailable. Refresh and try again." });
+  }
+
+  const totals = getProductTotals(body.items, catalog);
   if (!totals) {
-    return sendJson(res, 400, { error: "Your cart contains an invalid product or quantity. Refresh the cart and try again." });
+    return sendJson(res, 400, { error: "Your cart contains an unavailable product, invalid quantity, or insufficient stock. Refresh the cart and try again." });
   }
 
   const [existingOrder] = await db.select().from(payheroOrders)

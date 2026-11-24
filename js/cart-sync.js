@@ -1,6 +1,6 @@
 import { supabase } from "./supabase-client.js";
 
-const priceByName = new Map([["Fresh Milk", 70], ["Bread", 65], ["Rice", 180], ["Apples", 30], ["Eggs", 25], ["Juice", 100]]);
+let priceByName = new Map();
 let userId = null;
 let queue = Promise.resolve();
 
@@ -59,6 +59,18 @@ async function persistCart() {
 }
 
 async function initialize() {
+  try {
+    const response = await fetch("/api/products", { headers: { Accept: "application/json" } });
+    if (!response.ok) return;
+    const { products } = await response.json();
+    if (!Array.isArray(products) || products.length === 0) return;
+    priceByName = new Map(products
+      .filter((product) => typeof product.name === "string" && Number.isSafeInteger(Number(product.price)) && Number(product.price) > 0)
+      .map((product) => [product.name, Number(product.price)]));
+  } catch {
+    return;
+  }
+
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.user) return;
   userId = session.user.id;
