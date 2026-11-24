@@ -1,13 +1,15 @@
 const { and, eq, gte, sql } = require("drizzle-orm");
 const { db } = require("../../lib/db");
 const { payheroOrders } = require("../../lib/schema");
-const { upsertCustomerOrder, updateCustomerOrder } = require("../../lib/customer-account");
+const { adminRequest, upsertCustomerOrder, updateCustomerOrder } = require("../../lib/customer-account");
 const {
   PAYHERO_API,
   getCallbackUrl,
   getPayHeroAuth,
   getProductTotals,
+  getPayHeroHttpErrorMessage,
   isSameOrigin,
+  logPayHeroFailure,
   normalizePhoneNumber,
   sendJson,
 } = require("../../lib/payhero");
@@ -33,7 +35,6 @@ module.exports = async function createPayment(req, res) {
 
   const reference = body.reference;
   const phoneNumber = normalizePhoneNumber(body.phoneNumber);
-  const totals = getProductTotals(body.items);
 
   if (!UUID_PATTERN.test(String(reference || ""))) {
     return sendJson(res, 400, { error: "Invalid checkout reference." });
@@ -41,8 +42,20 @@ module.exports = async function createPayment(req, res) {
   if (!phoneNumber) {
     return sendJson(res, 400, { error: "Enter a valid Kenyan mobile number, such as 0712345678." });
   }
+  if (!Array.isArray(body.items) || body.items.length < 1 || body.items.length > 20) {
+    return sendJson(res, 400, { error: "Your cart is empty or invalid. Refresh the cart and try again." });
+  }
+
+  let catalog;
+  try {
+    catalog = await adminRequest("store_products?select=name,price,stock_quantity&is_active=eq.true");
+  } catch {
+    return sendJson(res, 503, { error: "The product catalog is temporarily unavailable. Refresh and try again." });
+  }
+
+  const totals = getProductTotals(body.items, catalog);
   if (!totals) {
-    return sendJson(res, 400, { error: "Your cart contains an invalid product or quantity. Refresh the cart and try again." });
+    return sendJson(res, 400, { error: "Your cart contains an unavailable product, invalid quantity, or insufficient stock. Refresh the cart and try again." });
   }
 
   const [existingOrder] = await db.select().from(payheroOrders)
@@ -101,9 +114,13 @@ module.exports = async function createPayment(req, res) {
     return sendJson(res, 503, { error: "Your account order could not be saved. Please start checkout again." });
   }
 
+  const { authorization, channelId, callbackUrl } = paymentConfig;
+  let response;
+  let rawBody = "";
+  let result = {};
+
   try {
-    const { authorization, channelId, callbackUrl } = paymentConfig;
-    const response = await fetch(`${PAYHERO_API}/payments`, {
+    response = await fetch(`${PAYHERO_API}/payments`, {
       method: "POST",
       headers: {
         Authorization: authorization,
@@ -119,42 +136,73 @@ module.exports = async function createPayment(req, res) {
       }),
       signal: AbortSignal.timeout(20000),
     });
-    const result = await response.json().catch(() => ({}));
-    const paymentResult = result.data && typeof result.data === "object"
-      ? result.data
-      : result.response && typeof result.response === "object"
-        ? result.response
-        : result;
-
-    const providerStatus = String(paymentResult.status || "").toLowerCase();
-    if (!response.ok || result.success === false || result.status === false || paymentResult.success === false || paymentResult.status === false || ["failed", "failure", "error"].includes(providerStatus)) {
-      await db.update(payheroOrders)
-        .set({ status: "failed", updatedAt: new Date() })
-        .where(eq(payheroOrders.externalReference, reference));
-      try { await updateCustomerOrder(reference, "failed"); } catch { /* payment ledger remains authoritative */ }
-      return sendJson(res, 502, {
-        error: paymentResult.message || result.message || result.error || "PayHero could not start the M-Pesa request. Please try again.",
-      });
-    }
-
-    const providerReference = paymentResult.reference || paymentResult.Reference || paymentResult.CheckoutRequestID || null;
-    const checkoutRequestId = paymentResult.CheckoutRequestID || null;
-    if (providerReference || checkoutRequestId) {
-      await db.update(payheroOrders)
-        .set({ providerReference, checkoutRequestId, updatedAt: new Date() })
-        .where(eq(payheroOrders.externalReference, reference));
-    }
-
-    return sendJson(res, 200, {
-      reference,
-      status: "pending",
-      message: paymentResult.message || result.message || "M-Pesa prompt sent. Enter your PIN on your phone to approve the payment.",
-    });
-  } catch {
+    rawBody = await response.text();
+    try {
+      const parsedBody = JSON.parse(rawBody);
+      result = parsedBody && typeof parsedBody === "object" ? parsedBody : {};
+    } catch { result = {}; }
+  } catch (error) {
+    logPayHeroFailure("payment initiation", { reference, error });
     return sendJson(res, 202, {
       reference,
       status: "pending",
       message: "We couldn’t confirm whether the request reached PayHero. Check your phone and payment status before retrying.",
     });
   }
+
+  if (response.status >= 500) {
+    logPayHeroFailure("payment initiation", { reference, status: response.status, payload: result, rawBody });
+    return sendJson(res, 202, {
+      reference,
+      status: "pending",
+      message: "PayHero is checking this request. Check your phone and payment status before trying again.",
+    });
+  }
+
+  const paymentResult = result.data && typeof result.data === "object"
+    ? result.data
+    : result.response && typeof result.response === "object"
+      ? result.response
+      : result;
+  const providerStatus = String(paymentResult.status || "").toLowerCase();
+  const providerRejected = !response.ok
+    || result.success === false
+    || result.status === false
+    || paymentResult.success === false
+    || paymentResult.status === false
+    || ["failed", "failure", "error"].includes(providerStatus);
+
+  if (providerRejected) {
+    logPayHeroFailure("payment initiation", { reference, status: response.status, payload: result, rawBody });
+    await db.update(payheroOrders)
+      .set({ status: "failed", updatedAt: new Date() })
+      .where(eq(payheroOrders.externalReference, reference));
+    try { await updateCustomerOrder(reference, "failed"); } catch { /* payment ledger remains authoritative */ }
+    return sendJson(res, 502, {
+      error: getPayHeroHttpErrorMessage(response.ok ? 400 : response.status, result),
+    });
+  }
+
+  const providerReference = paymentResult.reference
+    || paymentResult.Reference
+    || paymentResult.external_reference
+    || paymentResult.CheckoutRequestID
+    || paymentResult.checkout_request_id
+    || paymentResult.checkoutRequestId
+    || null;
+  const checkoutRequestId = paymentResult.CheckoutRequestID
+    || paymentResult.checkout_request_id
+    || paymentResult.checkoutRequestId
+    || null;
+  if (providerReference || checkoutRequestId) {
+    await db.update(payheroOrders)
+      .set({ providerReference, checkoutRequestId, updatedAt: new Date() })
+      .where(eq(payheroOrders.externalReference, reference));
+  }
+
+  return sendJson(res, 200, {
+    reference,
+    status: "pending",
+    message: paymentResult.message || result.message || "M-Pesa prompt sent. Enter your PIN on your phone to approve the payment.",
+  });
 };
