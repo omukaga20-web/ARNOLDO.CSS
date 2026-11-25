@@ -116,37 +116,57 @@ function setCheckoutStatus(message, state = "") {
     status.dataset.state = state;
 }
 
+async function getEdgeFunctionErrorMessage(error) {
+    const response = error?.context;
+    if (response && typeof response.clone === "function") {
+        try {
+            const body = await response.clone().json();
+            if (typeof body?.error === "string" && body.error.trim()) return body.error;
+            if (typeof body?.message === "string" && body.message.trim()) return body.message;
+        } catch {
+            try {
+                const message = await response.clone().text();
+                if (message.trim()) return message.trim();
+            } catch {}
+        }
+    }
+
+    return error?.message || "The payment service could not start checkout. Please try again.";
+}
+
 async function watchPayment(reference, submitButton) {
     for (let attempt = 0; attempt < 24; attempt += 1) {
         await new Promise((resolve) => window.setTimeout(resolve, 5000));
 
-        try {
-            const response = await fetch(`/api/payments/status?reference=${encodeURIComponent(reference)}`, {
-                headers: { Accept: "application/json" },
-                cache: "no-store",
-            });
-            const result = await response.json();
+        const { data: order, error } = await supabase
+            .from("customer_orders")
+            .select("payment_status")
+            .eq("reference", reference)
+            .single();
 
-            if (result.status === "completed") {
-                setCheckoutStatus("Payment confirmed. Thank you for shopping with us.", "success");
-                localStorage.removeItem("cart");
-                window.dispatchEvent(new CustomEvent("cart:updated"));
-                displayCart();
-                activeCheckoutReference = null;
-                submitButton.disabled = true;
-                submitButton.textContent = "Payment complete";
-                return;
-            }
+        if (error) {
+            setCheckoutStatus("Still waiting for the verified payment callback. Keep this window open and approve the prompt on your phone.");
+            continue;
+        }
 
-            if (["failed", "cancelled"].includes(result.status)) {
-                setCheckoutStatus("This M-Pesa payment did not complete. Check your phone and try again.", "error");
-                activeCheckoutReference = null;
-                submitButton.disabled = false;
-                submitButton.textContent = "Try payment again";
-                return;
-            }
-        } catch {
-            setCheckoutStatus("Still waiting for payment confirmation. Keep this window open and approve the prompt on your phone.");
+        const status = String(order?.payment_status || "").toLowerCase();
+        if (status === "completed") {
+            setCheckoutStatus("Payment confirmed. Thank you for shopping with us.", "success");
+            localStorage.removeItem("cart");
+            window.dispatchEvent(new CustomEvent("cart:updated"));
+            displayCart();
+            activeCheckoutReference = null;
+            submitButton.disabled = true;
+            submitButton.textContent = "Payment complete";
+            return;
+        }
+
+        if (["failed", "cancelled"].includes(status)) {
+            setCheckoutStatus("This M-Pesa payment did not complete. Check your phone and try again.", "error");
+            activeCheckoutReference = null;
+            submitButton.disabled = false;
+            submitButton.textContent = "Try payment again";
+            return;
         }
     }
 
@@ -167,45 +187,94 @@ async function submitCheckout(event) {
         return;
     }
 
-    const reference = activeCheckoutReference || crypto.randomUUID();
-    activeCheckoutReference = reference;
     submitButton.disabled = true;
     submitButton.textContent = "Sending request…";
-    setCheckoutStatus("Connecting securely to PayHero…");
+    setCheckoutStatus("Saving your order securely…");
 
     try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const response = await fetch("/api/payments/create", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Accept: "application/json",
-                ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-            },
-            body: JSON.stringify({
-                reference,
-                phoneNumber: phoneInput.value,
-                items: cart.map((item) => ({ name: item.name, quantity: item.quantity })),
-            }),
-        });
-        const result = await response.json();
-
-        if (!response.ok && response.status !== 202) {
-            activeCheckoutReference = null;
-            throw new Error(result.error || "We could not start checkout. Please try again.");
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw new Error(sessionError.message);
+        const session = sessionData?.session;
+        if (!session?.user?.id) {
+            throw new Error("Please sign in before checkout. Your order has not been submitted.");
         }
 
-        if (["failed", "cancelled"].includes(result.status)) {
+        const items = cart.map((item) => {
+            const name = String(item?.name || "").trim();
+            const quantity = Number(item?.quantity);
+            const unitPrice = Number(item?.price);
+            if (!name || !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 10 || !Number.isSafeInteger(unitPrice) || unitPrice < 1) {
+                throw new Error("Your cart contains an invalid item. Refresh it and try again.");
+            }
+            return { name, quantity, unitPrice };
+        });
+        const amount = items.reduce((total, item) => total + item.unitPrice * item.quantity, 0);
+        if (!Number.isSafeInteger(amount) || amount < 1) {
+            throw new Error("Your cart total is invalid. Refresh it and try again.");
+        }
+
+        let order;
+        if (activeCheckoutReference) {
+            const { data: savedOrder, error: savedOrderError } = await supabase
+                .from("customer_orders")
+                .select("reference")
+                .eq("reference", activeCheckoutReference)
+                .eq("user_id", session.user.id)
+                .single();
+            if (savedOrderError) throw new Error(savedOrderError.message);
+            order = savedOrder;
+        } else {
+            const reference = crypto.randomUUID();
+            const { data: savedOrder, error: orderError } = await supabase
+                .from("customer_orders")
+                .insert({
+                    user_id: session.user.id,
+                    reference,
+                    amount,
+                    items,
+                    payment_method: "mpesa",
+                    payment_status: "pending",
+                    order_status: "processing",
+                    phone_number: phoneInput.value.trim(),
+                })
+                .select("reference")
+                .single();
+            if (orderError) throw new Error(orderError.message);
+            order = savedOrder;
+        }
+
+        if (!order?.reference || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(order.reference))) {
             activeCheckoutReference = null;
-            setCheckoutStatus(result.message || "This M-Pesa payment did not complete. Check your phone and try again.", "error");
+            throw new Error("The saved order reference is missing or invalid. Please try checkout again.");
+        }
+        activeCheckoutReference = order.reference;
+
+        setCheckoutStatus("Connecting securely to PayHero…");
+        const { data, error } = await supabase.functions.invoke(
+            "payhero-stk-push",
+            {
+                body: {
+                    order_reference: order.reference
+                }
+            }
+        );
+
+        if (error) throw new Error(await getEdgeFunctionErrorMessage(error));
+        if (data?.error || data?.success === false) {
+            throw new Error(data.error || data.message || "The payment service could not start checkout.");
+        }
+
+        if (["failed", "cancelled"].includes(String(data?.status || "").toLowerCase())) {
+            activeCheckoutReference = null;
+            setCheckoutStatus(data.message || "This M-Pesa payment did not complete. Check your phone and try again.", "error");
             submitButton.disabled = false;
             submitButton.textContent = "Try payment again";
             return;
         }
 
-        setCheckoutStatus(result.message || "Check your phone and approve the M-Pesa prompt.");
+        setCheckoutStatus(data?.message || "Check your phone and approve the M-Pesa prompt.");
         submitButton.textContent = "Waiting for payment…";
-        await watchPayment(reference, submitButton);
+        await watchPayment(order.reference, submitButton);
     } catch (error) {
         setCheckoutStatus(error.message || "We could not start checkout. Please try again.", "error");
         submitButton.disabled = false;
